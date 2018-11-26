@@ -1,12 +1,14 @@
-
 #!/usr/bin/env python
 # -*- coding: gb18030 -*-
 # @Time    : 2018/11/14 14:21
 # @Author  : zhangpeng
 # @File    : download_data.py
-# è¯´æ˜     : ä¸‹è½½matomoæ•°æ®åˆ°æ•°æ®åº“
+# ËµÃ÷     : ÏÂÔØmatomoÊı¾İµ½Êı¾İ¿â
 
 
+import time
+import datetime
+import random
 import json
 import requests
 import pandas as pd
@@ -17,19 +19,24 @@ from pgsql_pool import PgsqlConn
 class MatomoApi(object):
 
     def __init__(self):
+        self.site = 'http://m.dwstyle.com'
+        self.dv_type = 'phone'
+        self.idsite = 2
+        self.__urls = {'detail': 'https://2.zerostats.com/index.php?module=API&method=Live.getLastVisitsDetails&filter_limit=500&filter_offset={3}&format=json&idSite={2}&period=day&date={0}&token_auth={1}',
+                       'visitor': 'https://2.zerostats.com/index.php?module=API&method=Live.getVisitorProfile&idSite={2}&filter_limit=500&filter_offset={3}&format=JSON&token_auth={1}&visitorId={0}',
+                       }
+
         pgdb = PgsqlConn()
         self.pgconn = pgdb.pgsql_conn()
+        self.__token = '0f8c3d42fb040f1950e50a24264cdf56'
         self.hd = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.67 Safari/537.36'}
-        self.__urls = {'detail': 'https://2.zerostats.com/index.php?module=API&method=Live.getLastVisitsDetails&format=json&idSite=1&period=day&date={0}&token_auth=0f8c3d42fb040f1950e50a24264cdf56',
-                       'visitor': 'https://2.zerostats.com/index.php?module=API&method=Live.getVisitorProfile&idSite=1&format=JSON&token_auth=0f8c3d42fb040f1950e50a24264cdf56&visitorId={0}',
-                       }
-        self.detail_struct = ['action', 'event', 'goal', 'ecommerceabandonedcart', 'ecommerceorder', 'itemdetails']
+        self.detail_struct = ['action', 'event', 'goal', 'ecommerceabandonedcart', 'ecommerceorder', 'itemdetails']  # itemdetails±ØĞëÎªÄ©Î²ÔªËØ
         self.fields = self.get_table_column(self.detail_struct + ['visit_details', ])
 
 
     def get_table_column(self, tables):
         """
-        :param tablename: è¡¨å
+        :param tables: ±íÃû
         :return:
         """
         sql = '''select table_name, string_agg(column_name, ',') as column_name from information_schema.columns where table_schema='public' and "table_name" in {0} GROUP BY table_name;'''
@@ -40,26 +47,48 @@ class MatomoApi(object):
 
         return ret
 
+    def get_max_vid(self, vid):
+        """
+        :param vid: vid
+        :return:
+        """
+        sql = '''SELECT max(aa."timestamp") as ax FROM {0} aa WHERE aa.pid in (SELECT cc.uid FROM visit_details cc WHERE cc.visitorid='{1}');'''
+        ret = {}
+        for tb in self.detail_struct[:-1]:
+            result = self.pgconn.execute(sql.format(tb, vid))
+            rep = result.fetchone()
+            ret[tb] = rep
+
+        return ret
+
     def dl_details(self, t):
         """
-        :param t:  æ—¥æœŸï¼Œä¾‹ 2018-11-14
+        :param t:  ÈÕÆÚ£¬Àı 2018-11-14
         :return: [{ }, { }]
         """
-        detail_url = self.__urls.get('detail').format(t)
-        try:
-            response = requests.get(detail_url, headers=self.hd).json()
-        except requests.exceptions as e:
-            response = []
-            print(e)
+        n_page = 0
+        while True:
+            n_page += 1
+            if n_page < 25: continue
+            detail_url = self.__urls.get('detail').format(t, self.__token, self.idsite, 500 * n_page)
+            print(detail_url)
+            try:
+                response = requests.get(detail_url, headers=self.hd).json()
+                if not response:
+                    break
+                else:
+                    yield response
+            except Exception as e:
+                print('dl_details exceptions: ', e)
+                break
 
-        return response
 
     def dl_visitor(self, vid):
         """
         :param vid:  visitorId
         :return: { }
         """
-        detail_url = self.__urls.get('visitor').format(vid)
+        detail_url = self.__urls.get('visitor').format(vid, self.__token, self.idsite)
         try:
             response = requests.get(detail_url, headers=self.hd).json()
         except requests.exceptions as e:
@@ -70,18 +99,21 @@ class MatomoApi(object):
 
     def parse_json(self, dct):
         """
-        è§£æå•æ¡json
+        ½âÎöµ¥Ìõjson
         :param dct: json data
         :return: [(),(),()...]
         """
         ret = {}
         visit_uid = str(uuid.uuid1()).replace('-', '')
-        # if isinstance(dct.get('actionDetails'), list):
         actiondetails = dct.pop('actionDetails')
         ret['visit_details'] = dict([(k.lower(), v) for k, v in dct.items() if k.lower() in self.fields.get('visit_details')])
         ret['visit_details'].update({'uid': visit_uid})
+
+        # sort_val = self.get_max_vid(ret.get('visitorid'))     # ·ÃÎÊÕßµÄ·ÃÎÊÊÂ¼ş¼ÇÂ¼µİÔö
         for x in self.detail_struct:
             ret[x] = []
+
+        sort_val = 1
         for dt in actiondetails:
             tp = dt.pop('type').lower()
             if tp not in self.detail_struct:
@@ -105,19 +137,20 @@ class MatomoApi(object):
                     ret['itemdetails'].append(ix)
 
             dt = dict([(k.lower(), v) for k, v in dt.items() if k.lower() in self.fields.get(tp)])
-            dt.update({'uid': action_uid, 'pid': visit_uid})
+            dt.update({'uid': action_uid, 'pid': visit_uid, 'record_id': sort_val})
+            sort_val += 1
             ret[tp].append(dt)
 
         return ret
 
     def clean_dt(self, dct):
         """
-        jsonè„æ•°æ®æ¸…æ´—
+        jsonÔàÊı¾İÇåÏ´
         :param dct: json
         :return:  dct
         """
         jdata = json.dumps(dct)
-        jdata.replace('"[', '[').replace(']"', ']')
+        jdata.replace('"[', '[').replace(']"', ']').replace('"none"', '')
 
         return json.loads(jdata)
 
@@ -142,16 +175,126 @@ class MatomoApi(object):
                     datas[x].extend(ret_json.get(x))
 
         for key_name in datas:
+            if not datas.get(key_name):
+                continue
             df = pd.DataFrame(datas.get(key_name))
             df.to_sql(key_name, self.pgconn, if_exists='append', index=False)
 
-        return datas
+        return True
+
+    def get_category(self):
+        """
+        »ñÈ¡Õ¾µãÉÌÆ··ÖÀà
+        :return:
+        """
+        category_api = self.site + '/shopping/category'
+        response = requests.get(category_api).json()
+        result = response.get('result')
+        if len(result) == 1:
+            return result[0].get('subcategory')
+        else:
+            return list(result.keys())
+
+    def get_product(self, category_id, sort_type=1, page=None):
+        """
+        :param category_id:  ·ÖÀàid
+        :param page: ÇëÇóÒ³
+        :param sort_type: ÇëÇóÀàĞÍ
+        :return:
+        """
+        if isinstance(page, int):
+            product_api = self.site + '/shopping/subcategory_shopping?category_id={0}&page={1}&sort_type={2}'.format(
+                category_id, page, sort_type)
+        else:
+            product_api = self.site + '/shopping/subcategory_shopping?category_id={0}&sort_type={1}'.format(
+                category_id, sort_type)
+
+        print(product_api)
+        response = requests.get(product_api, headers=self.hd).json()
+        return response.get('result')
+
+    def get_category_all_product(self, ctg):
+        """
+        ·ÖÒ³»ñÈ¡Õû¸ö·ÖÀàµÄÉÌÆ·
+        :param ctg:  ·ÖÀà
+        :return:
+        """
+        ret = []
+        n = 1
+        data = self.get_product(ctg, page=n)
+        while data:
+            print(ctg, ': ', n)
+            ret = ret + data
+            data = self.get_product(ctg, page=n)
+            time.sleep(random.choice(list(range(5))))
+            n += 1
+
+        return ret
+
+    def save_product(self):
+        """
+        Õû¸öÕ¾µãµÄËùÓĞ²úÆ·Êı¾İ±È½Ï£¬ Êı¾İÁ¿´óµÄÊ±ºòĞèÒªÖØĞÂ´¦Àí
+        :return:
+        """
+        ctg = self.get_category()
+        data = []
+        for cg in ctg:  # ¸ù¾İ´óÀàÖ±½Ó»ñÈ¡Õû¸ö´óÀàµÄËùÓĞÉÌÆ·
+            data = data + self.get_category_all_product(cg)
+        new_df = pd.DataFrame(data)
+        new_df['site'] = self.site.replace('http://', '')
+        new_df['timestamp'] = int(time.time())
+        new_df.to_sql('product_record', self.pgconn, schema='public', if_exists='append', index=False)
+        new_df['drive_type'] = self.dv_type
+        new_df.drop('price', axis=1, inplace=True)
+        new_df.drop('timestamp', axis=1, inplace=True)
+
+        sql = '''select * from stat_space.product;'''
+        old_df = pd.read_sql(sql, self.pgconn)
+        old_df.drop('id', axis=1, inplace=True)
+
+        mdf = pd.merge(new_df, old_df, on=list(new_df.columns), how='inner')  # ÕÒ³öĞÂ¼ÍÂ¼ºÍÊı¾İ¿âÏàÍ¬µÄ¼ÇÂ¼
+        new_df.drop(new_df.product_id.isin(list(mdf['product_id'])).index, inplace=True)  # dropµôĞÂ¼ÍÂ¼ºÍÊı¾İ¿âÏàÍ¬µÄ¼ÇÂ¼
+
+        if not new_df.empty:
+            dsql = '''delete from stat_space.product where product_id in {0}'''.format(str(tuple(new_df['product_id'])))
+            self.pgconn.execute(dsql)
+            new_df.to_sql('product', self.pgconn, schema='stat_space', if_exists='append', index=False)
+
+    def n_run(self, x_days: int):
+        """
+        :param x_days: ´Ó½ñÌìÆğµÄÇ°¼¸Ìì
+        :return:
+        """
+        print(datetime.datetime.now().strftime('%y-%M-%d %H:%M:%S'))
+        x_date = (datetime.datetime.today() - datetime.timedelta(days=x_days)).date()
+        while x_date < datetime.datetime.today().date():
+            print(x_date)
+            dl_ret = self.dl_details(str(x_date))
+            ln = 1
+            for lx in dl_ret:
+                self.parse_detail(lx)      # ½âÎömatomoÊı¾İ
+                print(ln * 500)
+                ln += 1
+            x_date += datetime.timedelta(days=1)
+        print(datetime.datetime.now().strftime('%y-%M-%d %H:%M:%S'))
+
+    def run(self, x_date):
+        """
+        :param x_date: ÈÕÆÚ
+        :return:
+        """
+        # print(datetime.datetime.now().strftime('%y-%M-%d %H:%M:%S'))
+        # dl_ret = self.dl_details(str(x_date))
+        # ln = 1
+        # for lx in dl_ret:
+        #     self.parse_detail(lx)  # ½âÎömatomoÊı¾İ
+        #     print(ln * 500)
+        #     ln += 1
+        # print(datetime.datetime.now().strftime('%y-%M-%d %H:%M:%S'))
 
 
 if __name__ == '__main__':
-    ss = MatomoApi()
-    for x_date in ["2018-10-29","2018-10-30","2018-10-31","2018-11-01","2018-11-02","2018-11-05","2018-11-06","2018-11-07","2018-11-08","2018-11-09","2018-11-12","2018-11-13"]:
-    # for x_date in ["2018-11-05",]:
-        print(x_date)
-        test = ss.dl_details(x_date)
-        aa = ss.parse_detail(test)
+    mapi = MatomoApi()
+    # mapi.n_run(9)
+    mapi.run((datetime.datetime.today() - datetime.timedelta(days=1)).date())
+    mapi.save_product()  # »ñÈ¡ÉÌ³ÇÕûÕ¾productÊı¾İ
