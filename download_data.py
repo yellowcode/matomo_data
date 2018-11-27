@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-# -*- coding: gb18030 -*-
+# -*- coding: utf-8 -*-
 # @Time    : 2018/11/14 14:21
 # @Author  : zhangpeng
 # @File    : download_data.py
-# ËµÃ÷     : ÏÂÔØmatomoÊı¾İµ½Êı¾İ¿â
+# è¯´æ˜     : ä¸‹è½½matomoæ•°æ®åˆ°æ•°æ®åº“
 
 
 import time
@@ -30,13 +30,13 @@ class MatomoApi(object):
         self.pgconn = pgdb.pgsql_conn()
         self.__token = '0f8c3d42fb040f1950e50a24264cdf56'
         self.hd = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.67 Safari/537.36'}
-        self.detail_struct = ['action', 'event', 'goal', 'ecommerceabandonedcart', 'ecommerceorder', 'itemdetails']  # itemdetails±ØĞëÎªÄ©Î²ÔªËØ
+        self.detail_struct = ['action', 'event', 'goal', 'ecommerceabandonedcart', 'ecommerceorder', 'itemdetails']  # itemdetailså¿…é¡»ä¸ºæœ«å°¾å…ƒç´ 
         self.fields = self.get_table_column(self.detail_struct + ['visit_details', ])
 
 
     def get_table_column(self, tables):
         """
-        :param tables: ±íÃû
+        :param tables: è¡¨å
         :return:
         """
         sql = '''select table_name, string_agg(column_name, ',') as column_name from information_schema.columns where table_schema='public' and "table_name" in {0} GROUP BY table_name;'''
@@ -63,7 +63,7 @@ class MatomoApi(object):
 
     def dl_details(self, t):
         """
-        :param t:  ÈÕÆÚ£¬Àı 2018-11-14
+        :param t:  æ—¥æœŸï¼Œä¾‹ 2018-11-14
         :return: [{ }, { }]
         """
         n_page = 0
@@ -99,7 +99,7 @@ class MatomoApi(object):
 
     def parse_json(self, dct):
         """
-        ½âÎöµ¥Ìõjson
+        è§£æå•æ¡json
         :param dct: json data
         :return: [(),(),()...]
         """
@@ -109,7 +109,7 @@ class MatomoApi(object):
         ret['visit_details'] = dict([(k.lower(), v) for k, v in dct.items() if k.lower() in self.fields.get('visit_details')])
         ret['visit_details'].update({'uid': visit_uid})
 
-        # sort_val = self.get_max_vid(ret.get('visitorid'))     # ·ÃÎÊÕßµÄ·ÃÎÊÊÂ¼ş¼ÇÂ¼µİÔö
+        # sort_val = self.get_max_vid(ret.get('visitorid'))     # è®¿é—®è€…çš„è®¿é—®äº‹ä»¶è®°å½•é€’å¢
         for x in self.detail_struct:
             ret[x] = []
 
@@ -145,7 +145,7 @@ class MatomoApi(object):
 
     def clean_dt(self, dct):
         """
-        jsonÔàÊı¾İÇåÏ´
+        jsonè„æ•°æ®æ¸…æ´—
         :param dct: json
         :return:  dct
         """
@@ -184,7 +184,7 @@ class MatomoApi(object):
 
     def get_category(self):
         """
-        »ñÈ¡Õ¾µãÉÌÆ··ÖÀà
+        è·å–ç«™ç‚¹å•†å“åˆ†ç±»
         :return:
         """
         category_api = self.site + '/shopping/category'
@@ -197,9 +197,9 @@ class MatomoApi(object):
 
     def get_product(self, category_id, sort_type=1, page=None):
         """
-        :param category_id:  ·ÖÀàid
-        :param page: ÇëÇóÒ³
-        :param sort_type: ÇëÇóÀàĞÍ
+        :param category_id:  åˆ†ç±»id
+        :param page: è¯·æ±‚é¡µ
+        :param sort_type: è¯·æ±‚ç±»å‹
         :return:
         """
         if isinstance(page, int):
@@ -215,8 +215,8 @@ class MatomoApi(object):
 
     def get_category_all_product(self, ctg):
         """
-        ·ÖÒ³»ñÈ¡Õû¸ö·ÖÀàµÄÉÌÆ·
-        :param ctg:  ·ÖÀà
+        åˆ†é¡µè·å–æ•´ä¸ªåˆ†ç±»çš„å•†å“
+        :param ctg:  åˆ†ç±»
         :return:
         """
         ret = []
@@ -233,12 +233,12 @@ class MatomoApi(object):
 
     def save_product(self):
         """
-        Õû¸öÕ¾µãµÄËùÓĞ²úÆ·Êı¾İ±È½Ï£¬ Êı¾İÁ¿´óµÄÊ±ºòĞèÒªÖØĞÂ´¦Àí
+        æ•´ä¸ªç«™ç‚¹çš„æ‰€æœ‰äº§å“æ•°æ®æ¯”è¾ƒï¼Œ æ•°æ®é‡å¤§çš„æ—¶å€™éœ€è¦é‡æ–°å¤„ç†
         :return:
         """
         ctg = self.get_category()
         data = []
-        for cg in ctg:  # ¸ù¾İ´óÀàÖ±½Ó»ñÈ¡Õû¸ö´óÀàµÄËùÓĞÉÌÆ·
+        for cg in ctg:  # æ ¹æ®å¤§ç±»ç›´æ¥è·å–æ•´ä¸ªå¤§ç±»çš„æ‰€æœ‰å•†å“
             data = data + self.get_category_all_product(cg)
         new_df = pd.DataFrame(data)
         new_df['site'] = self.site.replace('http://', '')
@@ -252,8 +252,8 @@ class MatomoApi(object):
         old_df = pd.read_sql(sql, self.pgconn)
         old_df.drop('id', axis=1, inplace=True)
 
-        mdf = pd.merge(new_df, old_df, on=list(new_df.columns), how='inner')  # ÕÒ³öĞÂ¼ÍÂ¼ºÍÊı¾İ¿âÏàÍ¬µÄ¼ÇÂ¼
-        new_df.drop(new_df.product_id.isin(list(mdf['product_id'])).index, inplace=True)  # dropµôĞÂ¼ÍÂ¼ºÍÊı¾İ¿âÏàÍ¬µÄ¼ÇÂ¼
+        mdf = pd.merge(new_df, old_df, on=list(new_df.columns), how='inner')  # æ‰¾å‡ºæ–°çºªå½•å’Œæ•°æ®åº“ç›¸åŒçš„è®°å½•
+        new_df.drop(new_df.product_id.isin(list(mdf['product_id'])).index, inplace=True)  # dropæ‰æ–°çºªå½•å’Œæ•°æ®åº“ç›¸åŒçš„è®°å½•
 
         if not new_df.empty:
             dsql = '''delete from stat_space.product where product_id in {0}'''.format(str(tuple(new_df['product_id'])))
@@ -262,7 +262,7 @@ class MatomoApi(object):
 
     def n_run(self, x_days: int):
         """
-        :param x_days: ´Ó½ñÌìÆğµÄÇ°¼¸Ìì
+        :param x_days: ä»ä»Šå¤©èµ·çš„å‰å‡ å¤©
         :return:
         """
         print(datetime.datetime.now().strftime('%y-%M-%d %H:%M:%S'))
@@ -272,7 +272,7 @@ class MatomoApi(object):
             dl_ret = self.dl_details(str(x_date))
             ln = 1
             for lx in dl_ret:
-                self.parse_detail(lx)      # ½âÎömatomoÊı¾İ
+                self.parse_detail(lx)      # è§£æmatomoæ•°æ®
                 print(ln * 500)
                 ln += 1
             x_date += datetime.timedelta(days=1)
@@ -280,14 +280,14 @@ class MatomoApi(object):
 
     def run(self, x_date):
         """
-        :param x_date: ÈÕÆÚ
+        :param x_date: æ—¥æœŸ
         :return:
         """
         # print(datetime.datetime.now().strftime('%y-%M-%d %H:%M:%S'))
         # dl_ret = self.dl_details(str(x_date))
         # ln = 1
         # for lx in dl_ret:
-        #     self.parse_detail(lx)  # ½âÎömatomoÊı¾İ
+        #     self.parse_detail(lx)  # è§£æmatomoæ•°æ®
         #     print(ln * 500)
         #     ln += 1
         # print(datetime.datetime.now().strftime('%y-%M-%d %H:%M:%S'))
@@ -295,6 +295,6 @@ class MatomoApi(object):
 
 if __name__ == '__main__':
     mapi = MatomoApi()
-    # mapi.n_run(9)
-    mapi.run((datetime.datetime.today() - datetime.timedelta(days=1)).date())
-    mapi.save_product()  # »ñÈ¡ÉÌ³ÇÕûÕ¾productÊı¾İ
+    mapi.n_run(9)
+    # mapi.run((datetime.datetime.today() - datetime.timedelta(days=1)).date())
+    mapi.save_product()  # è·å–å•†åŸæ•´ç«™productæ•°æ®
