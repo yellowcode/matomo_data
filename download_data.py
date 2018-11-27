@@ -283,14 +283,14 @@ class MatomoApi(object):
         :param x_date: 日期
         :return:
         """
-        # print(datetime.datetime.now().strftime('%y-%M-%d %H:%M:%S'))
-        # dl_ret = self.dl_details(str(x_date))
-        # ln = 1
-        # for lx in dl_ret:
-        #     self.parse_detail(lx)  # 解析matomo数据
-        #     print(ln * 500)
-        #     ln += 1
-        # print(datetime.datetime.now().strftime('%y-%M-%d %H:%M:%S'))
+        print(datetime.datetime.now().strftime('%y-%M-%d %H:%M:%S'))
+        dl_ret = self.dl_details(str(x_date))
+        ln = 1
+        for lx in dl_ret:
+            self.parse_detail(lx)  # 解析matomo数据
+            print(ln * 500)
+            ln += 1
+        print(datetime.datetime.now().strftime('%y-%M-%d %H:%M:%S'))
 
 
 if __name__ == '__main__':
