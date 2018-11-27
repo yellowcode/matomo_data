@@ -18,7 +18,7 @@ class StatData(object):
     def __init__(self):
         pgdb = PgsqlConn()
         self.pgconn = pgdb.pgsql_conn()
-        self.site = 'm.dwstyle.kydev.org'
+        self.site = 'm.dwstyle.com'
         self.idsite = 1
         self.sort_map = {
             'newness_desc': 2,
@@ -40,8 +40,15 @@ class StatData(object):
             product_api = 'http://' + self.site + '/shopping/subcategory_shopping?category_id={0}&sort_type={1}'.format(
                 category_id, sort_type)
 
-        response = requests.get(product_api).json()
-        return response.get('result')
+        response = requests.get(product_api)
+        if response.status_code == 200:
+            response = response.json()
+            if response.get('result'):
+                return response.get('result')
+            else:
+                return []
+        else:
+            return []
 
     def get_search(self, keyword, page):
         """
@@ -51,8 +58,15 @@ class StatData(object):
         :return:
         """
         search_api = 'http://' + self.site + '/shopping/search?keyword={0}&page={1}'.format(keyword, page)
-        response = requests.get(search_api).json()
-        return response.get('result')
+        response = requests.get(search_api)
+        if response.status_code == 200:
+            response = response.json()
+            if response.get('result'):
+                return response.get('result')
+            else:
+                return []
+        else:
+            return []
 
     def get_promotion_code(self):
         """
@@ -169,6 +183,8 @@ class StatData(object):
             else:
                 keyword = tmp[0]
                 page = 1
+
+            print(keyword, '---', page)
             response = self.get_search(keyword, page)
             ret = ret + [{'product_id': x.get('product_id'), 'search_show': val[-1]} for x in response]
 
@@ -186,15 +202,17 @@ class StatData(object):
         result = self.pgconn.execute(sql)
         ret = []
         for val in result.fetchall():
+            print(val)
             try:
                 stp = 1
                 for tp in self.sort_map:
                     if tp in val[0]:
                         stp = self.sort_map.get(tp)
+                        print('stp: ', stp)
                     else:
                         stp = 1
                 response = self.get_product(category_id=int(val[1]), page=int(val[2]), sort_type=stp)
-                ret = ret + [{'product_id': x.get('product_id'), 'list_show': val[-1]} for x in response]
+                ret = ret + [{'product_id': int(x.get('product_id')), 'list_show': val[-1]} for x in response]
             except Exception as e:
                 print('list_click event url error: ', e)
                 continue
@@ -227,7 +245,7 @@ class StatData(object):
         :param key: 类别
         :return:
         """
-        flags = {'order_click': 'addOrder', 'cart_click': 'addCart', 'like_click': ''}
+        flags = {'order_click': 'addOrder', 'cart_click': 'addCart', 'like_click': 'collect'}
         sql = ('''SELECT eventname, count(1) as num FROM event 
         WHERE eventaction='{0}' and url ~ '{1}' and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{2}' 
         GROUP BY eventname''').format(flags.get(key), self.site, x_date)
@@ -244,38 +262,50 @@ class StatData(object):
         where aa.url ~ '{0}.+?-p-' and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
         GROUP BY substring(aa.url from '-p-(\d+)\.html');''').format(self.site, x_date)
         result = self.pgconn.execute(sql)
-        return [{'product_id': x[0], 'detail_click': x[1]} for x in result.fetchall()]
+        return [{'product_id': int(x[0]), 'detail_click': x[1]} for x in result.fetchall()]
 
     def gen_sql_stat(self, x_date):
         """
-        生成sql统计出url请求的各种列表页次数
+        生成统计值
         :return:
         """
-        # TODO: 需要写一个装饰器，聚合每个函数的返回product_id
-
         left_list_click = pd.DataFrame(self.list_click(x_date))
-        right_index_show = pd.DataFrame(self.index_show(x_date))
-        right_promotion_show = pd.DataFrame(self.promotion_show(x_date))
+        # right_index_show = pd.DataFrame(self.index_show(x_date))
+        # right_promotion_show = pd.DataFrame(self.promotion_show(x_date))
         # right_ad_show = pd.DataFrame(self.ad_show(x_date))
-        # right_search_show = pd.DataFrame(self.ad_show(x_date))
+        right_search_show = pd.DataFrame(self.search_show(x_date))
         right_detail_click = pd.DataFrame(self.detail_click(x_date))
         right_order_click = pd.DataFrame(self.ocl_click(x_date, 'order_click'))
         right_cart_click = pd.DataFrame(self.ocl_click(x_date, 'cart_click'))
         right_like_click = pd.DataFrame(self.ocl_click(x_date, 'like_click'))
 
-        result = left_list_click.join([right_index_show,
-                                       right_promotion_show,
-                                       right_detail_click,
-                                       right_order_click,
-                                       right_cart_click,
-                                       right_like_click])
+        pds = [
+            left_list_click,
+            # right_index_show,
+            # right_promotion_show,
+            # right_ad_show,
+            right_search_show,
+            right_detail_click,
+            right_order_click,
+            right_cart_click,
+            right_like_click
+        ]
 
-        print(result.head())
-        # TODO: 存库
+        product_id = []
+        for x in range(len(pds)):
+            keys = list(pds[x].columns)
+            keys.remove('product_id')
+            pds[x] = pds[x].groupby('product_id').agg({keys[0]: 'sum'}).reset_index()
+            product_id = product_id + [{'product_id': int(n)} for n in set(pds[x]['product_id'])]
 
-        return result
+        result = pd.DataFrame(product_id)
+        for px in pds:
+            result = pd.merge(result, px, how='left', on='product_id').reset_index(drop='index')
+
+        result.to_sql('shopping_params', self.pgconn, schema='stat_space', if_exists='append', index=False)
+
 
 if __name__ == '__main__':
     sd = StatData()
-    for x in []:
-        sd.gen_sql_stat(x)
+    sd.gen_sql_stat('2018-11-25')
+    # q = sd.search_show('2018-11-25')
