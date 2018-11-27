@@ -69,7 +69,6 @@ class MatomoApi(object):
         n_page = 0
         while True:
             n_page += 1
-            if n_page < 25: continue
             detail_url = self.__urls.get('detail').format(t, self.__token, self.idsite, 500 * n_page)
             print(detail_url)
             try:
