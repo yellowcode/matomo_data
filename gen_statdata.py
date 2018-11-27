@@ -185,7 +185,12 @@ class StatData(object):
                 page = 1
 
             print(keyword, '---', page)
-            response = self.get_search(keyword, page)
+            try:
+                response = self.get_search(keyword, page)
+            except Exception as e:
+                print('search requests error: ', e)
+                continue
+
             ret = ret + [{'product_id': x.get('product_id'), 'search_show': val[-1]} for x in response]
 
         return ret
@@ -307,5 +312,7 @@ class StatData(object):
 
 if __name__ == '__main__':
     sd = StatData()
-    sd.gen_sql_stat('2018-11-25')
+    # sd.gen_sql_stat('2018-11-25')
     # q = sd.search_show('2018-11-25')
+    # q = sd.get_search(95007, 1)
+    # print(q)
