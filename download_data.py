@@ -251,6 +251,8 @@ class MatomoApi(object):
         old_df = pd.read_sql(sql, self.pgconn)
         old_df.drop('id', axis=1, inplace=True)
 
+        for field in ['product_id', 'category', 'subcategory', 'create_time']:
+            new_df[field].astype('int')
         mdf = pd.merge(new_df, old_df, on=list(new_df.columns), how='inner')  # 找出新纪录和数据库相同的记录
         new_df.drop(new_df.product_id.isin(list(mdf['product_id'])).index, inplace=True)  # drop掉新纪录和数据库相同的记录
 
@@ -294,6 +296,6 @@ class MatomoApi(object):
 
 if __name__ == '__main__':
     mapi = MatomoApi()
-    mapi.n_run(9)
-    # mapi.run((datetime.datetime.today() - datetime.timedelta(days=1)).date())
+    # mapi.n_run(9)
+    mapi.run((datetime.datetime.today() - datetime.timedelta(days=1)).date())
     mapi.save_product()  # 获取商城整站product数据
