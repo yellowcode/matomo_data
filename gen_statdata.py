@@ -337,29 +337,66 @@ class StatData(object):
         result = self.pgconn.execute(sql)
         return [{'product_id': int(x[0]), 'list_click': x[1]} for x in result.fetchall()]
 
+    def index_click(self, x_date):
+        """
+        首页点击量
+        :param x_date: 日期
+        :return:
+        """
+        sql = '''SELECT substring(action.url from '-p-(\d+)\.html'), count(1) as num FROM action 
+        WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and url ~ 'm.dwstyle.com.+?-p-' 
+        and action.pageidrefaction=(SELECT pageidaction FROM action WHERE action.url='https://{0}/ LIMIT 1') 
+        GROUP BY substring(action.url from '-p-(\d+)\.html')'''.format(self.site, x_date)
+        result = self.pgconn.execute(sql)
+        return [{'product_id': int(x[0]), 'list_click': x[1]} for x in result.fetchall()]
+
+    def promotion_click(self, x_date):
+        """
+        活动点击量
+        :param x_date: 日期
+        :return:
+        """
+        pm_word = 'banner|/sale'
+        sql = '''SELECT substring(action.url from '-p-(\d+)\.html') as product_id, count(1) as num FROM action 
+        WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and url ~ '{0}.+?-p-' and action.pageidrefaction in 
+        (SELECT pageidaction FROM action WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
+        and action.url ~ '\?ref=.*?{2}' GROUP BY action.pageidaction) 
+        GROUP BY substring(action.url from '-p-(\d+)\.html')'''.format(self.site, x_date, pm_word)
+        result = self.pgconn.execute(sql)
+        return [{'product_id': int(x[0]), 'list_click': x[1]} for x in result.fetchall()]
+
     def gen_sql_stat(self, x_date):
         """
         生成统计值
         :return:
         """
-        left_list_show = pd.DataFrame(self.list_show(x_date))
+        # left_list_show = pd.DataFrame(self.list_show(x_date))
+        # print('left_list_show')
         left_ad_show = pd.DataFrame(self.ad_show(x_date))
+        print('left_ad_show')
         left_search_show = pd.DataFrame(self.search_show(x_date))
+        print('left_search_show')
         # left_index_show = pd.DataFrame(self.index_show(x_date))
         # left_promotion_show = pd.DataFrame(self.promotion_show(x_date))
 
         right_list_click = pd.DataFrame(self.list_click(x_date))
+        print('right_list_click')
         right_ad_click = pd.DataFrame(self.ad_click(x_date))
+        print('right_ad_click')
         right_search_click = pd.DataFrame(self.search_click(x_date))
+        print('right_search_click')
         # right_promotion_click = pd.DataFrame(self.promotion_click(x_date))
         # right_index_click = pd.DataFrame(self.index_click(x_date))
 
         right_order_click = pd.DataFrame(self.ocl_click(x_date, 'order_click'))
+        print('right_order_click')
         right_cart_click = pd.DataFrame(self.ocl_click(x_date, 'cart_click'))
+        print('right_cart_click')
         right_like_click = pd.DataFrame(self.ocl_click(x_date, 'like_click'))
+        print('right_like_click')
 
         pds = [
-            left_list_show,
+            # left_list_show,
             left_ad_show,
             left_search_show,
             # right_index_show,
