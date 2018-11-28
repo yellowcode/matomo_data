@@ -251,8 +251,8 @@ class MatomoApi(object):
         old_df = pd.read_sql(sql, self.pgconn)
         old_df.drop('id', axis=1, inplace=True)
 
-        for field in ['product_id', 'category', 'subcategory', 'create_time']:
-            new_df[field].astype('int')
+        for k, v in zip(old_df.columns, old_df.dtypes):
+            new_df[k] = new_df[k].astype(v)
         mdf = pd.merge(new_df, old_df, on=list(new_df.columns), how='inner')  # 找出新纪录和数据库相同的记录
         new_df.drop(new_df.product_id.isin(list(mdf['product_id'])).index, inplace=True)  # drop掉新纪录和数据库相同的记录
 
