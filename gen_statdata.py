@@ -169,8 +169,8 @@ class StatData(object):
         """
         re_word = 'utm_source=|id_sort'     # url后缀参数代表是广告着陆页的
         sql = '''SELECT split_part(tb.url, '?', 1) as url,split_part(tb.url, '?', 2) as id_sort,tb.eventaction,count(1) as num from 
-        (SELECT url,eventaction,eventname FROM public."event" ee WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='2018-11-26' 
-        and ee.url ~ 'm.dwstyle.com.+?-c-') as tb where split_part(tb.url, 'html?', 2) ~ 'utm_source=|id_sort' 
+        (SELECT url,eventaction,eventname FROM public."event" ee WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
+        and ee.url ~ '{0}.+?-c-') as tb where split_part(tb.url, 'html?', 2) ~ '{2}' 
         and tb.eventname=1 or length(split_part(tb.url, 'html?', 2))>120 
         GROUP BY split_part(tb.url, '?', 1),split_part(tb.url, '?', 2),tb.eventaction;'''.format(self.site, x_date, re_word)
         result = pd.read_sql(sql, self.pgconn)
@@ -192,9 +192,9 @@ class StatData(object):
                 print('list_click event url error: ', e)
                 continue
 
-        import re
         id_sort = re.findall('\d{4,7}', ''.join(pros))
-        ret = ret + [{'product_id': int(k), 'ad_show': v} for k, v in dict(Counter(id_sort).items())]
+        id_sort = dict(Counter(id_sort))
+        ret = ret + [{'product_id': int(k), 'ad_show': v} for k, v in id_sort.items()]
 
         return ret
 
@@ -429,7 +429,7 @@ class StatData(object):
 
 if __name__ == '__main__':
     sd = StatData()
-    # sd.gen_sql_stat('2018-11-25')
-    q = sd.ad_show('2018-11-25')
+    sd.gen_sql_stat('2018-11-25')
+    # q = sd.ad_show('2018-11-25')
     # q = sd.get_search(95007, 1)
-    print(q)
+    # print(q)
