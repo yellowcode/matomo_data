@@ -335,7 +335,7 @@ class StatData(object):
         WHERE ee.url ~ '{0}.+?search' and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}') 
         GROUP BY substring(action.url from '-p-(\d+)\.html')'''.format(self.site, x_date)
         result = self.pgconn.execute(sql)
-        return [{'product_id': int(x[0]), 'list_click': x[1]} for x in result.fetchall()]
+        return [{'product_id': int(x[0]), 'search_click': x[1]} for x in result.fetchall()]
 
     def index_click(self, x_date):
         """
@@ -345,10 +345,10 @@ class StatData(object):
         """
         sql = '''SELECT substring(action.url from '-p-(\d+)\.html'), count(1) as num FROM action 
         WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and url ~ 'm.dwstyle.com.+?-p-' 
-        and action.pageidrefaction=(SELECT pageidaction FROM action WHERE action.url='https://{0}/ LIMIT 1') 
+        and action.pageidrefaction=(SELECT pageidaction FROM action WHERE action.url='https://{0}/' LIMIT 1) 
         GROUP BY substring(action.url from '-p-(\d+)\.html')'''.format(self.site, x_date)
         result = self.pgconn.execute(sql)
-        return [{'product_id': int(x[0]), 'list_click': x[1]} for x in result.fetchall()]
+        return [{'product_id': int(x[0]), 'index_click': x[1]} for x in result.fetchall()]
 
     def promotion_click(self, x_date):
         """
@@ -363,7 +363,7 @@ class StatData(object):
         and action.url ~ '\?ref=.*?{2}' GROUP BY action.pageidaction) 
         GROUP BY substring(action.url from '-p-(\d+)\.html')'''.format(self.site, x_date, pm_word)
         result = self.pgconn.execute(sql)
-        return [{'product_id': int(x[0]), 'list_click': x[1]} for x in result.fetchall()]
+        return [{'product_id': int(x[0]), 'promotion_click': x[1]} for x in result.fetchall()]
 
     def gen_sql_stat(self, x_date):
         """
@@ -415,6 +415,9 @@ class StatData(object):
 
         product_id = []
         for x in range(len(pds)):
+            if pds[x].empty:
+                continue
+
             keys = list(pds[x].columns)
             keys.remove('product_id')
             pds[x] = pds[x].groupby('product_id').agg({keys[0]: 'sum'}).reset_index()
