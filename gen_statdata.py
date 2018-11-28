@@ -178,7 +178,7 @@ class StatData(object):
         result.drop('id_sort', axis=1, inplace=True)
         result = result.groupby(['url', 'eventaction']).agg({'num': 'sum'}).reset_index()
         ret = []
-        for val in result.rows:
+        for index, val in result.iterrows():
             try:
                 stp = 1
                 for tp in self.sort_map:
