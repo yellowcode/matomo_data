@@ -168,11 +168,11 @@ class StatData(object):
         :return:
         """
         re_word = 'utm_source=|id_sort'     # url后缀参数代表是广告着陆页的
-        sql = '''SELECT split_part(tb.url, '?', 1) as url,tb.eventaction,tb.eventname,count(1) as num from 
-        (SELECT url,eventaction,eventname FROM public."event" ee 
-        WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and ee.url ~ '{0}.+?-c-') as tb 
-        where split_part(tb.url, 'html?', 2) ~ '{2}' and tb.eventname=1 or length(split_part(tb.url, 'html?', 2))>120 
-        GROUP BY split_part(tb.url, '?', 1),tb.eventaction,tb.eventname;'''.format(self.site, x_date, re_word)
+        sql = '''SELECT split_part(tb.url, '?', 1) as url,split_part(tb.url, '?', 2) as id_sort,tb.eventaction,count(1) as num from 
+        (SELECT url,eventaction,eventname FROM public."event" ee WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='2018-11-26' 
+        and ee.url ~ 'm.dwstyle.com.+?-c-') as tb where split_part(tb.url, 'html?', 2) ~ 'utm_source=|id_sort' 
+        and tb.eventname=1 or length(split_part(tb.url, 'html?', 2))>120 
+        GROUP BY split_part(tb.url, '?', 1),split_part(tb.url, '?', 2),tb.eventaction;'''.format(self.site, x_date, re_word)
         result = pd.read_sql(sql, self.pgconn)
         pros = [x for x in result['id_sort'] if 'id_sort' in x]
         result.drop('id_sort', axis=1, inplace=True)
@@ -385,8 +385,10 @@ class StatData(object):
         print('right_ad_click')
         right_search_click = pd.DataFrame(self.search_click(x_date))
         print('right_search_click')
-        # right_promotion_click = pd.DataFrame(self.promotion_click(x_date))
-        # right_index_click = pd.DataFrame(self.index_click(x_date))
+        right_promotion_click = pd.DataFrame(self.promotion_click(x_date))
+        print('right_promotion_click')
+        right_index_click = pd.DataFrame(self.index_click(x_date))
+        print('right_index_click')
 
         right_order_click = pd.DataFrame(self.ocl_click(x_date, 'order_click'))
         print('right_order_click')
@@ -404,8 +406,8 @@ class StatData(object):
             right_list_click,
             right_ad_click,
             right_search_click,
-            # right_promotion_click,
-            # right_index_click,
+            right_promotion_click,
+            right_index_click,
             right_order_click,
             right_cart_click,
             right_like_click
@@ -427,7 +429,7 @@ class StatData(object):
 
 if __name__ == '__main__':
     sd = StatData()
-    sd.gen_sql_stat('2018-11-25')
-    # q = sd.search_show('2018-11-25')
+    # sd.gen_sql_stat('2018-11-25')
+    q = sd.ad_show('2018-11-25')
     # q = sd.get_search(95007, 1)
-    # print(q)
+    print(q)
