@@ -296,7 +296,7 @@ class StatData(object):
         WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and ee.url ~ '{0}.+?-c-') as tb 
         where split_part(tb.url, 'html?', 2) ~ '{2}' and tb.eventname=1 or length(split_part(tb.url, 'html?', 2))>120) 
         GROUP BY url,pageidaction;'''.format(self.site, x_date, re_word)
-        result = self.pgconn(sql)
+        result = self.pgconn.execute(sql)
         result = str(tuple([x[0] for x in result.fetchall()]))
         c_sql = '''SELECT substring(action.url from '-p-(\d+)\.html'), count(1) as num FROM action 
         WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and url ~ '{0}.+?-p-' and action.pageidrefaction in {2} 
@@ -315,7 +315,7 @@ class StatData(object):
         WHERE ee.url ~ '{0}.+?-c-' and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}') tb 
         where not (split_part(tb.url, 'html?', 2) ~ '{2}' and tb.eventname=1)) 
         GROUP BY url,pageidaction;'''.format(self.site, x_date, del_word)
-        result = self.pgconn(sql)
+        result = self.pgconn.execute(sql)
         result = str(tuple([x[0] for x in result.fetchall()]))
         c_sql = '''SELECT substring(action.url from '-p-(\d+)\.html'), count(1) as num FROM action 
         WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and url ~ '{0}.+?-p-' and action.pageidrefaction in {2} 
