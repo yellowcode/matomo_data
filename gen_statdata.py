@@ -205,7 +205,7 @@ class StatData(object):
         :param x_date:
         :return:
         """
-        sql = ('''SELECT url, count(1) FROM action 
+        sql = ('''SELECT url, count(1) as num FROM action 
         WHERE url ~ '{0}.+?search' and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
         GROUP BY url''').format(self.site, x_date)
         result = self.pgconn.execute(sql)
@@ -236,7 +236,7 @@ class StatData(object):
         :param x_date:
         :return:
         """
-        sql = ('''select split_part(tb.url, '?', 1),tb.eventaction,tb.eventname from 
+        sql = ('''select split_part(tb.url, '?', 1),tb.eventaction,tb.eventname, count(1) as num from 
         (SELECT url,eventaction,eventname FROM public."event" ee 
         WHERE ee.url ~ '{0}.+?-c-' and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}') tb 
         where not (split_part(tb.url, 'html?', 2) ~ 'utm_source=|banner|id_sort' and tb.eventname=1) 
