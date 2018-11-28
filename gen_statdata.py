@@ -427,7 +427,7 @@ class StatData(object):
 
 if __name__ == '__main__':
     sd = StatData()
-    # sd.gen_sql_stat('2018-11-25')
+    sd.gen_sql_stat('2018-11-25')
     # q = sd.search_show('2018-11-25')
     # q = sd.get_search(95007, 1)
     # print(q)
