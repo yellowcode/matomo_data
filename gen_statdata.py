@@ -6,6 +6,7 @@
 # 说明     : 生成模型数据
 
 import re
+import datetime
 from collections import Counter
 import pandas as pd
 import requests
@@ -427,6 +428,7 @@ class StatData(object):
         for px in pds:
             result = pd.merge(result, px, how='left', on='product_id').reset_index(drop='index')
 
+        result['date'] = str(x_date)
         result.to_sql('shopping_params', self.pgconn, schema='stat_space', if_exists='append', index=False)
 
 
