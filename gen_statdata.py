@@ -429,12 +429,19 @@ class StatData(object):
             result = pd.merge(result, px, how='left', on='product_id').reset_index(drop='index')
 
         result['date'] = str(x_date)
+        result = result.drop_duplicates(keep='first', inplace=False)
         result.to_sql('shopping_params', self.pgconn, schema='stat_space', if_exists='append', index=False)
 
+    def test(self):
+        sql = '''SELECT * FROM stat_space.shopping_params;'''
+        result = pd.read_sql(sql, self.pgconn)
+        result.drop('id', inplace=True)
+        result.to_sql('dbug_shopping_params', self.pgconn, schema='stat_space', if_exists='append', index=False)
 
 if __name__ == '__main__':
     sd = StatData()
-    sd.gen_sql_stat('2018-11-25')
+    # sd.gen_sql_stat('2018-11-25')
     # q = sd.ad_show('2018-11-25')
     # q = sd.get_search(95007, 1)
     # print(q)
+    sd.test()
