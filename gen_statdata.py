@@ -368,10 +368,12 @@ class StatData(object):
         print('left_list_show')
         left_ad_show = pd.DataFrame(self.ad_show(x_date))
         print('left_ad_show')
-        # left_search_show = pd.DataFrame(self.search_show(x_date))
-        # print('left_search_show')
-        # left_index_show = pd.DataFrame(self.index_show(x_date))
-        # left_promotion_show = pd.DataFrame(self.promotion_show(x_date))
+        left_search_show = pd.DataFrame(self.search_show(x_date))
+        print('left_search_show')
+        left_index_show = pd.DataFrame(self.index_show(x_date))
+        print('left_index_show')
+        left_promotion_show = pd.DataFrame(self.promotion_show(x_date))
+        print('left_promotion_show')
 
         right_list_click = pd.DataFrame(self.list_click(x_date))
         print('right_list_click')
@@ -394,9 +396,9 @@ class StatData(object):
         pds = [
             left_list_show,
             left_ad_show,
-            # left_search_show,
-            # right_index_show,
-            # right_promotion_show,
+            left_search_show,
+            left_index_show,
+            left_promotion_show,
             right_list_click,
             right_ad_click,
             right_search_click,
