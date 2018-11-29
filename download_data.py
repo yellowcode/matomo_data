@@ -9,6 +9,7 @@
 import time
 import datetime
 import random
+import re
 import json
 import requests
 import pandas as pd
@@ -19,7 +20,7 @@ from pgsql_pool import PgsqlConn
 class MatomoApi(object):
 
     def __init__(self):
-        self.site = 'http://m.dwstyle.com'
+        self.site = 'https://m.dwstyle.com'
         self.dv_type = 'phone'
         self.idsite = 2
         self.__urls = {'detail': 'https://2.zerostats.com/index.php?module=API&method=Live.getLastVisitsDetails&filter_limit=500&filter_offset={3}&format=json&idSite={2}&period=day&date={0}&token_auth={1}',
@@ -261,6 +262,9 @@ class MatomoApi(object):
             self.pgconn.execute(dsql)
             new_df.to_sql('product', self.pgconn, schema='stat_space', if_exists='append', index=False)
 
+        # 勾选页中不存在于产品库中的数据
+        self.check_spider_product()
+
     def n_run(self, x_days: int):
         """
         :param x_days: 从今天起的前几天
@@ -293,9 +297,76 @@ class MatomoApi(object):
             ln += 1
         print(datetime.datetime.now().strftime('%y-%M-%d %H:%M:%S'))
 
+    def spider_index(self):
+        hd = {'user-agent': ('Mozilla/5.0 (Linux; Android 8.1; EML-AL00 Build/HUAWEIEML-AL00; wv) '
+                             'AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/53.0.2785.143 '
+                             'Crosswalk/24.53.595.0 XWEB/358 MMWEBSDK/23 Mobile Safari/537.36 '
+                             'MicroMessenger/6.7.2.1340(0x2607023A) NetType/4G Language/zh_CN')}
+        response = requests.get(self.site, headers=hd)
+        response.encoding = 'utf-8'
+        regs = re.findall('<a href="(.+?)"[^>]*>', response.text)
+
+        index_pms = {}
+        index = []
+        ref_pms = []
+        for x in regs:
+            flag = re.findall('home|button|leimu', x.split('ref')[-1])
+            if '-p-' in x:
+                index.append(x.split('.html')[0].split('-p-')[-1])
+            elif 'ref' in x and '-c-' not in x and not flag:
+                ref_pms.append(x)
+        ref_pms = ref_pms + ['/new-entry.html', '/sale.html']
+        ref_pms = list(set([self.site + x if x[-1] == '/' else self.site + x + '/' for x in ref_pms]))
+        for ul in ref_pms:
+            response = requests.get(ul, headers=hd)
+            response.encoding = 'utf-8'
+            regs = re.findall('<a href="(.+?)"[^>]*>', response.text)
+            index_pms[ul] = '-'.join([x.split('.html')[0].split('-p-')[-1] for x in regs if '-p-' in x])
+        index_pms[self.site + '/'] = '-'.join(index)
+
+        for x in index_pms:
+            index_pms[x] = [int(x) for x in re.findall('\d+', index_pms.get(x))]
+
+        return index_pms
+
+    def check_spider_product(self):
+        sql = '''SELECT DISTINCT product_id FROM stat_space.product;'''
+        result = self.pgconn.execute(sql)
+        result = set([x[0] for x in result.fetchall()])
+        resp = self.spider_index()
+        datas = []
+        [datas.extend(v) for k, v in resp.items()]
+        datas = set(datas)
+        diff_data = datas.difference(result)
+
+        url = '{0}/shopping/detail_product?product_id={1}'
+        ret = []
+        for proid in diff_data:
+            try:
+                response = requests.get(url.format(self.site, proid)).json()
+            except Exception as e:
+                print('detail_product req error: ', proid, ': ', e)
+                continue
+
+            ret.append(response.get('result'))
+
+        df = pd.DataFrame(ret)
+        df['site'] = self.site.replace('http://', '')
+        df['timestamp'] = int(time.time())
+        df.to_sql('product_record', self.pgconn, schema='public', if_exists='append', index=False)
+        df['drive_type'] = self.dv_type
+        df.drop('price', axis=1, inplace=True)
+        df.drop('timestamp', axis=1, inplace=True)
+        df.to_sql('product', self.pgconn, schema='stat_space', if_exists='append', index=False)
+
+        return True
+
 
 if __name__ == '__main__':
     mapi = MatomoApi()
-    # mapi.n_run(9)
-    mapi.run((datetime.datetime.today() - datetime.timedelta(days=1)).date())
-    mapi.save_product()  # 获取商城整站product数据
+#     # mapi.n_run(9)
+#     mapi.run((datetime.datetime.today() - datetime.timedelta(days=1)).date())
+#     mapi.save_product()  # 获取商城整站product数据
+    q = mapi.spider_index()
+    print(q)
+

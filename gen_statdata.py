@@ -5,8 +5,9 @@
 # @File    : gen_statdata.py
 # 说明     : 生成模型数据
 
+
+import copy
 import re
-import datetime
 from collections import Counter
 import pandas as pd
 import requests
@@ -27,6 +28,7 @@ class StatData(object):
             'price_asc': 3,
             'price_desc': 4
         }
+        self.index_response = self.spider_index()
 
     def get_product(self, category_id, sort_type=1, page=None):
         """
@@ -81,41 +83,37 @@ class StatData(object):
 
         return response
 
-    def _test_get_promotion_code(self):
-        """
-        伪造code值数据
-        :return:
-        """
-        return {
-            "code": 200,
-            "msg": "Success",
-            "promotion": {
-                "banner1": "banner",
-                "index-banner1": "m-index-banner1",
-                "index-banner2": "m-index-banner2",
-                "index-banner3": "m-index-banner3",
-                "index-banner4": "m-index-banner4"
-            },
-            "catagory_show": [
-                4671,
-                4664,
-                4679,
-                4686,
-                4708
-            ]
-        }
+    def spider_index(self):
+        hd = {'user-agent': ('Mozilla/5.0 (Linux; Android 8.1; EML-AL00 Build/HUAWEIEML-AL00; wv) '
+                             'AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/53.0.2785.143 '
+                             'Crosswalk/24.53.595.0 XWEB/358 MMWEBSDK/23 Mobile Safari/537.36 '
+                             'MicroMessenger/6.7.2.1340(0x2607023A) NetType/4G Language/zh_CN')}
+        response = requests.get('https://' + self.site, headers=hd)
+        response.encoding = 'utf-8'
+        regs = re.findall('<a href="(.+?)"[^>]*>', response.text)
 
-    def get_promotion_product(self, code):
-        """
-        获取code值对应的产品
-        :param x_date: 日期
-        :param code: 勾选code值
-        :return:
-        """
-        url = 'http://' + self.site + '/shopping/index_shopping?code={0}'.format(code)
-        response = requests.get(url).json()
+        index_pms = {}
+        index = []
+        ref_pms = []
+        for x in regs:
+            flag = re.findall('home|button|leimu', x.split('ref')[-1])
+            if '-p-' in x:
+                index.append(x.split('.html')[0].split('-p-')[-1])
+            elif 'ref' in x and '-c-' not in x and not flag:
+                ref_pms.append(x)
+        ref_pms = ref_pms + ['/new-entry.html', '/sale.html']
+        ref_pms = list(set(['https://' + self.site + x for x in ref_pms]))
+        for ul in ref_pms:
+            response = requests.get(ul, headers=hd)
+            response.encoding = 'utf-8'
+            regs = re.findall('-p-(\d{4,7})\.html', response.text)
+            index_pms[ul] = '-'.join([x for x in regs])
+        index_pms['https://' + self.site + '/'] = '-'.join(index)
 
-        return response.get('result')
+        for x in index_pms:
+            index_pms[x] = [int(x) for x in re.findall('\d+', index_pms.get(x))]
+
+        return index_pms
 
     def index_show(self, x_date):
         """
@@ -123,20 +121,18 @@ class StatData(object):
         :param x_date: 日期
         :return:
         """
-        response = self.get_promotion_code()
-        ret = []
-        for ctg in response.get('catagory_show'):
-            data = self.get_product(category_id=ctg, page=1, sort_type=1)
-            ret = ret + data[:10]
-
         # 乘以？  当日action次数 | 当日访客次数,  当前选择action次数
-        sql = ('''SELECT count(1) as a_num FROM action where length(url) <= length('http:///' + {0}) 
-        and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}';''').format(self.site, x_date)
+        index_product = self.index_response.get('https://' + self.site + '/')
+        sql = ('''SELECT count(1) as a_num FROM action where length(url)<={0} 
+        and to_char(to_timestamp(action.timestamp), 'yyyy-MM-dd')='{1}';''').format(len('https:///' + self.site), x_date)
         # sql = ('''SELECT count(1) as v_num FROM visit_details WHERE idsite={0}
         # and to_char(to_timestamp(servertimestamp), 'yyyy-MM-dd')='{1}';''').format(self.idsite, x_date)
         result = self.pgconn.execute(sql)
         num = result.fetchone()
-        ret = [{'product_id': x.get('product_id'), 'index_show': num} for x in ret]
+        if num:
+            ret = [{'product_id': int(x), 'index_show': num[0]} for x in index_product]
+        else:
+            ret = []
 
         return ret
 
@@ -146,19 +142,16 @@ class StatData(object):
         :param x_date: 日期
         :return:
         """
-        response = self.get_promotion_code()
-        ret = []
-        pms = response.get('promotion')
+        promotion_map = copy.deepcopy(self.index_response)
+        promotion_map.pop('https://' + self.site + '/')
 
-        sql = ('''SELECT split_part(url, 'ref=', 2), count(1) as num FROM action 
-        WHERE split_part(url, 'ref=', 2) in {0} and url ~ '{1}' and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{2}' 
-        GROUP BY split_part(url, 'ref=', 2)''').format(str(tuple(pms.keys())), self.site, x_date)
+        sql = ('''SELECT action.url, count(1) as num FROM action 
+        WHERE to_char(to_timestamp(action.timestamp), 'yyyy-MM-dd')='{0}' and action.url in {1} 
+        GROUP BY action.url;''').format(x_date, str(tuple(promotion_map.keys())))
         result = self.pgconn.execute(sql)
-        data = dict([result.fetchall()])
-
-        for code in pms:
-            response = self.get_promotion_product(pms.get(code))
-            ret = ret + [{'product_id': x.get('product_id'), 'promotion_show': data.get(code)} for x in response]
+        ret = []
+        for val in result.fetchall():
+            ret = ret + [{'product_id': int(x), 'promotion_show': val[1]} for x in promotion_map.get(val[0])]
 
         return ret
 
@@ -432,17 +425,22 @@ class StatData(object):
         result.drop_duplicates(keep='first', inplace=True)
         result.to_sql('shopping_params', self.pgconn, schema='stat_space', if_exists='append', index=False)
 
-    def test(self):
-        sql = '''SELECT * FROM stat_space.shopping_params;'''
-        result = pd.read_sql(sql, self.pgconn)
-        result.drop('id', axis=1, inplace=True)
-        result.drop_duplicates(keep='first', inplace=True)
-        result.to_sql('dbug_shopping_params', self.pgconn, schema='stat_space', if_exists='append', index=False)
+    # def test(self):
+    #     sql = '''SELECT * FROM stat_space.shopping_params;'''
+    #     result = pd.read_sql(sql, self.pgconn)
+    #     result.drop('id', axis=1, inplace=True)
+    #     result.drop_duplicates(keep='first', inplace=True)
+    #     result.to_sql('dbug_shopping_params', self.pgconn, schema='stat_space', if_exists='append', index=False)
 
-if __name__ == '__main__':
-    sd = StatData()
-    sd.gen_sql_stat('2018-11-25')
-    # q = sd.ad_show('2018-11-25')
-    # q = sd.get_search(95007, 1)
-    # print(q)
-    # sd.test()
+
+# if __name__ == '__main__':
+#     sd = StatData()
+#     sd.gen_sql_stat('2018-11-25')
+#     # q = sd.ad_show('2018-11-25')
+#     # q = sd.get_search(95007, 1)
+#     # print(q)
+#     # sd.test()
+#     q = sd.index_show('2018-11-25')
+#     print(q)
+#     w = sd.promotion_show('2018-11-25')
+#     print(w)
