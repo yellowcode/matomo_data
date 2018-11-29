@@ -264,6 +264,7 @@ class MatomoApi(object):
 
         # 勾选页中不存在于产品库中的数据
         self.check_spider_product()
+        print('new index product_id ok')
 
     def n_run(self, x_days: int):
         """
@@ -358,8 +359,6 @@ class MatomoApi(object):
         df.drop('price', axis=1, inplace=True)
         df.drop('timestamp', axis=1, inplace=True)
         df.to_sql('product', self.pgconn, schema='stat_space', if_exists='append', index=False)
-
-        return True
 
 
 if __name__ == '__main__':
