@@ -435,7 +435,7 @@ class StatData(object):
     def test(self):
         sql = '''SELECT * FROM stat_space.shopping_params;'''
         result = pd.read_sql(sql, self.pgconn)
-        result.drop('id', inplace=True)
+        result.drop('id', axis=1, inplace=True)
         result.to_sql('dbug_shopping_params', self.pgconn, schema='stat_space', if_exists='append', index=False)
 
 if __name__ == '__main__':
