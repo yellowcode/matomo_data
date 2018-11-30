@@ -219,7 +219,7 @@ class StatData(object):
                 print('search requests error: ', e)
                 continue
 
-            ret = ret + [{'product_id': x.get('product_id'), 'search_show': val[-1]} for x in response]
+            ret = ret + [{'product_id': int(x.get('product_id')), 'search_show': val[-1]} for x in response]
 
         return ret
 
@@ -237,6 +237,8 @@ class StatData(object):
         result = self.pgconn.execute(sql)
         ret = []
         for val in result.fetchall():
+            if val[1][0] not in '0123456789':
+                continue
             try:
                 stp = 1
                 for tp in self.sort_map:
