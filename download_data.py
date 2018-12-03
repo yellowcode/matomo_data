@@ -271,7 +271,7 @@ class MatomoApi(object):
         :param x_days: 从今天起的前几天
         :return:
         """
-        print(datetime.datetime.now().strftime('%y-%M-%d %H:%M:%S'))
+        print(datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S'))
         x_date = (datetime.datetime.today() - datetime.timedelta(days=x_days)).date()
         while x_date < datetime.datetime.today().date():
             print(x_date)
@@ -282,7 +282,7 @@ class MatomoApi(object):
                 print(ln * 500)
                 ln += 1
             x_date += datetime.timedelta(days=1)
-        print(datetime.datetime.now().strftime('%y-%M-%d %H:%M:%S'))
+        print(datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S'))
 
     def run(self, x_date):
         """
