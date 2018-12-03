@@ -7,16 +7,17 @@
 
 
 import numpy as np
+import pandas as pd
+from pgsql_pool import PgsqlConn
 
 
 class ShoppingSort(object):
 
     def __init__(self):
-        pass
+        pgdb = PgsqlConn()
+        self.pgconn = pgdb.pgsql_conn()
 
     def wilson_score(self, pos, total, p_z=2.0):
-
-
         """
         威尔逊得分计算函数
         :param pos: 正例数
@@ -24,7 +25,7 @@ class ShoppingSort(object):
         :param p_z: 正太分布的分位数，一般而言，样本数的量级越大，z的取值大
         :return: 威尔逊得分
         """
-        if total == 0:      # 没有曝光
+        if not total and not pos:      # 没有曝光
             return 0.00
 
         pos_rat = pos * 1.0 / total * 1.0  # 正例比率
@@ -33,9 +34,15 @@ class ShoppingSort(object):
         c = (1.0 + np.square(p_z) / total)
         return round((a - b) / c, 6)
 
-    def run(self):
-        pass
+    def test(self, x_date):
+        sql = '''SELECT * from stat_space.shopping_params where date='{0}';'''.format(x_date)
+        result = pd.DataFrame(sql, self.pgconn)
+        w_list = [self.wilson_score(p, t) for p, t in zip(result['list_click'], result['list_show'])]
+        w_list.sort(reverse=True)
+        return w_list[0:50]
 
 
 if __name__ == '__main__':
-    pass
+    wv = ShoppingSort()
+    q = wv.test('2018-11-29')
+    print(q)
