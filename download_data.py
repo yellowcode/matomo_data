@@ -361,11 +361,11 @@ class MatomoApi(object):
         df.to_sql('product', self.pgconn, schema='stat_space', if_exists='append', index=False)
 
 
-if __name__ == '__main__':
-    mapi = MatomoApi()
+# if __name__ == '__main__':
+#     mapi = MatomoApi()
 #     # mapi.n_run(9)
 #     mapi.run((datetime.datetime.today() - datetime.timedelta(days=1)).date())
 #     mapi.save_product()  # 获取商城整站product数据
-    q = mapi.spider_index()
-    print(q)
+#     q = mapi.spider_index()
+#     print(q)
 
