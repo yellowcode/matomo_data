@@ -241,7 +241,7 @@ class MatomoApi(object):
         for cg in ctg:  # 根据大类直接获取整个大类的所有商品
             data = data + self.get_category_all_product(cg)
         new_df = pd.DataFrame(data)
-        new_df['site'] = self.site.replace('http://', '')
+        new_df['site'] = self.site.replace('https://', '')
         new_df['timestamp'] = int(time.time())
         new_df.to_sql('product_record', self.pgconn, schema='public', if_exists='append', index=False)
         new_df['drive_type'] = self.dv_type
