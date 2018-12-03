@@ -351,6 +351,9 @@ class MatomoApi(object):
 
             ret.append(response.get('result'))
 
+        if not ret:
+            return
+
         df = pd.DataFrame(ret)
         df['site'] = self.site.replace('http://', '')
         df['timestamp'] = int(time.time())
