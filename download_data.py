@@ -6,6 +6,7 @@
 # 说明     : 下载matomo数据到数据库
 
 
+import pathlib
 import time
 import datetime
 import random
@@ -62,6 +63,11 @@ class MatomoApi(object):
 
         return ret
 
+    def file_dumps(self, fname, text):
+        pathlib.Path('/'.join(fname.split('/')[:-1])).mkdir(parents=True, exist_ok=True)
+        with open(fname, 'w') as fp:
+            fp.write(json.dumps(text, ensure_ascii=False))
+
     def dl_details(self, t):
         """
         :param t:  日期，例 2018-11-14
@@ -77,6 +83,7 @@ class MatomoApi(object):
                 if not response:
                     break
                 else:
+                    self.file_dumps('/root/data/{0}/{1}_{2}.txt'.format(t, 500 * (n_page - 1), 500 * n_page), response)
                     yield response
             except Exception as e:
                 print('dl_details exceptions: ', e)
