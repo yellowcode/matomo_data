@@ -38,7 +38,7 @@ class StatData(object):
         :return:
         """
         sql = ('''SELECT uid FROM visit_details 
-        WHERE to_char(to_timestamp(servertimestamp), 'yyyy-MM-dd')='{}';''').format(x_date)
+        WHERE to_char(to_timestamp(servertimestamp), 'yyyy-MM-dd')='{0}' and countrycode='cn';''').format(x_date)
         result = self.pgconn.execute(sql)
         return str(tuple([x[0] for x in result.fetchall()]))
 
