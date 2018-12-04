@@ -283,7 +283,7 @@ class StatData(object):
         flags = {'order_click': 'addOrder', 'cart_click': 'addCart', 'like_click': 'collect'}
         sql = ('''SELECT eventname, count(1) as num FROM event 
         WHERE eventaction='{0}' and url ~ '{1}' and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{2}' 
-        and pid not in {2} GROUP BY eventname''').format(flags.get(key), self.site, x_date, n_uids)
+        and pid not in {3} GROUP BY eventname''').format(flags.get(key), self.site, x_date, n_uids)
         result = self.pgconn.execute(sql)
         return [{'product_id': int(x[0]), key: x[1]} for x in result.fetchall()]
 
