@@ -83,12 +83,11 @@ class MatomoApi(object):
                 if not response:
                     break
                 else:
-                    self.file_dumps('/root/data/{0}/{1}_{2}.txt'.format(t, 500 * (n_page - 1), 500 * n_page), response)
+                    self.file_dumps('/root/project/mdata/{0}/{1}_{2}.txt'.format(t, 500 * (n_page - 1), 500 * n_page), response)
                     yield response
             except Exception as e:
                 print('dl_details exceptions: ', e)
                 break
-
 
     def dl_visitor(self, vid):
         """
