@@ -79,5 +79,5 @@ class ShoppingSort(object):
 
 if __name__ == '__main__':
     wv = ShoppingSort()
-    q = wv.test('2018-12-02')
+    q = wv.test('2018-11-29')
     print(q)
