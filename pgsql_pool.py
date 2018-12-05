@@ -14,7 +14,7 @@ class PgsqlConn(object):
 
     def __init__(self):
         self.__engine_space = create_engine('postgresql://shengyt:syt2018@47.90.97.255:54320/matomo')
-        # self.__engine_space = create_engine('postgresql://postgres:syt2018@localhost:5432/postgres')
+        # self.__engine_space = create_engine('postgresql://shengyt:syt2018@localhost:54320/matomo')
 
     def pgsql_conn(self):
         """
@@ -37,11 +37,3 @@ class PgsqlConn(object):
 #     action = '''SELECT distinct aa.url FROM public.action aa WHERE aa.url ~ '-p-' and aa.url ~ 'm.dws';'''
 #     ss = db_pool.execute(action)
 #     a = [x[0] for x in ss.fetchall()]
-#
-#     event = '''SELECT distinct url, eventaction,eventname FROM public."event" ee WHERE ee.url ~ '-p-' and ee.url ~ 'm.dws';'''
-#     ss = db_pool.execute(event)
-#     e = [x[0] for x in ss.fetchall()]
-#
-#     for x in e:
-#         if x not in a:
-#             print(x)
