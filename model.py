@@ -85,10 +85,12 @@ class ShoppingSort(object):
                 continue
             avg = round(data[col].mean(), 7)
             sdr = round(data[col].std(), 7)
-            print(avg)
-            print(sdr)
             q = round(sdr / avg, 7)
             ret[col] = {'avg': avg, 'sdr': sdr, 'q': q}
+
+        q_sum = sum([v.get('q') for k, v in ret.items()])
+        for k, v in ret.items():
+            ret[k] = v.get('q') / q_sum
 
         # 权重可在此处调整
 
@@ -97,7 +99,18 @@ class ShoppingSort(object):
     def cul_run(self, x_date):
         re_data = self.test_calculate_sort(x_date)
         re_w = self.weight_sort(re_data)
-        print(re_w)
+        cols = [x for x in list(re_data.columns) if 'w_' in x]
+        re_data['sort_value'] = re_data[cols[0]]*re_w.get(cols[0]) + \
+                                 re_data[cols[1]]*re_w.get(cols[1]) + \
+                                 re_data[cols[2]]*re_w.get(cols[2]) + \
+                                 re_data[cols[3]]*re_w.get(cols[3]) + \
+                                 re_data[cols[4]]*re_w.get(cols[4]) + \
+                                 re_data[cols[5]]*re_w.get(cols[5]) + \
+                                 re_data[cols[6]]*re_w.get(cols[6]) + \
+                                 re_data[cols[7]]*re_w.get(cols[7])
+
+        re_data.sort_values(by='sort_value', ascending=False, inplace=True)  # 按一列排序
+        return re_data['sort_value']
 
 
 if __name__ == '__main__':

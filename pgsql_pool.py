@@ -13,8 +13,8 @@ from sqlalchemy.orm import sessionmaker
 class PgsqlConn(object):
 
     def __init__(self):
-        # self.__engine_space = create_engine('postgresql://penpen:peng1479@192.144.129.168:54320/matomo', pool_recycle=300)
-        self.__engine_space = create_engine('postgresql://postgres:syt2018@localhost:5432/postgres')
+        self.__engine_space = create_engine('postgresql://shengyt:syt2018@47.90.97.255:54320/matomo')
+        # self.__engine_space = create_engine('postgresql://postgres:syt2018@localhost:5432/postgres')
 
     def pgsql_conn(self):
         """
