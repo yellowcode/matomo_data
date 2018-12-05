@@ -288,18 +288,18 @@ class StatData(object):
         result = self.pgconn.execute(sql)
         return [{'product_id': int(x[0]), key: x[1]} for x in result.fetchall()]
 
-    def detail_click(self, x_date, n_uids):
+    def total_detail_click(self, x_date, n_uids):
         """
         详情点击量统计
         :param x_date: 日期
         :param n_uids: 排除uid序列
         :return: [{},{}]
         """
-        sql = ('''SELECT substring(aa.url from '-p-(\d+)\.html') as product_id, count(1) as num FROM action aa 
+        sql = ('''SELECT substring(aa.url from '-p-(\d+)\.html') as product_idv, count(1) as num FROM action aa 
         where aa.url ~ '{0}.+?-p-' and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and pid not in {2}
-        GROUP BY substring(aa.url from '-p-(\d+)\.html');''').format(self.site, x_date, n_uids)
+        GROUP BY product_idv;''').format(self.site, x_date, n_uids)
         result = self.pgconn.execute(sql)
-        return [{'product_id': int(x[0]), 'detail_click': x[1]} for x in result.fetchall()]
+        return [{'product_id': int(x[0]), 'total_detail_click': x[1]} for x in result.fetchall()]
 
     def ad_click(self, x_date, n_uids):
         """
@@ -491,6 +491,8 @@ class StatData(object):
         left_promotion_show = pd.DataFrame(self.promotion_show(x_date, uids))
         print('left_promotion_show')
 
+        right_total_detail_click = pd.DataFrame(self.total_detail_click(x_date, uids))
+        print('right_total_detail_click')
         right_list_click = pd.DataFrame(self.test_list_click(x_date, uids))
         print('right_list_click')
         right_ad_click = pd.DataFrame(self.ad_click(x_date, uids))
@@ -515,6 +517,7 @@ class StatData(object):
             left_search_show,
             left_index_show,
             left_promotion_show,
+            right_total_detail_click,
             right_list_click,
             right_ad_click,
             right_search_click,
