@@ -48,7 +48,7 @@ class ShoppingSort(object):
 
         return ret
 
-    def test(self, x_date):
+    def calculate_sort(self, x_date, filter=-1):
         sql = '''SELECT * from stat_space.shopping_params where date='{0}';'''.format(x_date)
         result = pd.read_sql(sql, self.pgconn)
         result = result.fillna(0)
@@ -59,7 +59,8 @@ class ShoppingSort(object):
             for k, p, t in zip(result['product_id'], result[c_click], result[c_show]):
                 w_list.append({'product_id': k, 'value': self.wilson_score(p, t, k), 'params': {c_click: p, c_show: t}})
             w_list.sort(key=lambda x: x.get('value'), reverse=True)
-            w_list = w_list[0:50]
+            if filter > 0:
+                w_list = w_list[0:50]
             [x.update({'index': w_list.index(x)+1}) for x in w_list]
             ret[c_click] = {'params': c_click + '/' + c_show, 'w_sort': w_list}
 
@@ -70,12 +71,28 @@ class ShoppingSort(object):
                 t = t1 + t2 + t3 + t4 + t5
                 w_list.append({'product_id': k, 'value': self.wilson_score(p, t, k), 'params': {c_click: p, c_show: t}})
             w_list.sort(key=lambda x: x.get('value'), reverse=True)
-            w_list = w_list[0:50]
+            if filter > 0:
+                w_list = w_list[0:50]
             [x.update({'index': w_list.index(x)+1}) for x in w_list]
             ret[c_click] = {'params': c_click + '/' + 'total_product_click', 'w_sort': w_list}
 
         return ret
 
+    def weight_sort(self, data):
+        ret = {}
+        for k in data:
+            l_values = [x.get('value') for x in data.get('w_sort')]
+            if not l_values:
+                return None
+            avg = sum(l_values)/len(l_values)
+            sdr = np.std(l_values, ddof=1)
+            q = sdr / avg
+            ret[k] = {'avg': avg, 'sdr': sdr, 'q': q}
+
+        return ret
+
+    def cul_run(self):
+        pass
 
 if __name__ == '__main__':
     wv = ShoppingSort()

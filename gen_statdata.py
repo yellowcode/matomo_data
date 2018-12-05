@@ -184,7 +184,7 @@ class StatData(object):
         result = pd.read_sql(sql, self.pgconn)
         pros = [x for x, y in zip(result['id_sort'], result['eventname']) if 'id_sort' in x and y == 1]
         result.drop('id_sort', axis=1, inplace=True)
-        result = result.groupby(['url', 'eventaction']).agg({'num': 'sum'}).reset_index()
+        result = result.groupby(['surl', 'eventaction']).agg({'num': 'sum'}).reset_index()
         ret = []
         for index, val in result.iterrows():
             if val['eventaction'] not in '0123456789':
@@ -192,7 +192,7 @@ class StatData(object):
             try:
                 stp = 1
                 for tp in self.sort_map:
-                    if tp in val['url']:
+                    if tp in val['surl']:
                         stp = self.sort_map.get(tp)
                     else:
                         stp = 1
