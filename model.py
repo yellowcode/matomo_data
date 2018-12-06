@@ -30,7 +30,7 @@ class ShoppingSort(object):
             return 0.00
 
         if pos > total:
-            pos = total = (pos + total)/2
+            total = pos + total
 
         try:
             pos_rat = pos * 1.0 / total * 1.0  # 正例比率
@@ -39,7 +39,7 @@ class ShoppingSort(object):
             c = (1.0 + np.square(p_z) / total)
             ret = round((a - b) / c, 6)
         except Exception as e:
-            print(k, '---', pos, '---', total, ' e: ', e)
+            print(pos, '---', total, ' e: ', e)
             ret = round(0.00, 6)
 
         if 'nan' in str(ret):
