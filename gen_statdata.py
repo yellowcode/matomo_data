@@ -28,7 +28,7 @@ class StatData(object):
             'price_asc': 3,
             'price_desc': 4
         }
-        # self.index_response = self.spider_index()
+        self.index_response = self.spider_index()
 
     def get_visuid(self, x_date):
         """
