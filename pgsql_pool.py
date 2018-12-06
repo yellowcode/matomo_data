@@ -15,6 +15,7 @@ class PgsqlConn(object):
     def __init__(self):
         self.__engine_space = create_engine('postgresql://shengyt:syt2018@47.90.97.255:54320/matomo')
         # self.__engine_space = create_engine('postgresql://shengyt:syt2018@localhost:54320/matomo')
+        self.__mysql_space = create_engine('mysql://root:fGrIyMAiPS9wPcE8HnW8@localhost:3306/dwstyle')
 
     def pgsql_conn(self):
         """
@@ -30,10 +31,25 @@ class PgsqlConn(object):
         session = S()
         return session
 
+    def mysql_pgsql_conn(self):
+        """
+        :return: 数据仓库 sqlalchemy模板create_engine
+        """
+        return self.__mysql_space
 
-# if __name__ == '__main__':
-#     pgdb = PgsqlConn()
-#     db_pool = pgdb.pgsql_conn()
-#     action = '''SELECT distinct aa.url FROM public.action aa WHERE aa.url ~ '-p-' and aa.url ~ 'm.dws';'''
-#     ss = db_pool.execute(action)
-#     a = [x[0] for x in ss.fetchall()]
+    def mysql_sqlalchemy_conn(self):
+        """
+        :return:  :return: 数据仓库链接对象
+        """
+        S = sessionmaker(bind=self.__mysql_space)
+        session = S()
+        return session
+
+if __name__ == '__main__':
+    pgdb = PgsqlConn()
+    db_pool = pgdb.mysql_pgsql_conn()
+    sql = '''select id,rating,sort from cc_products limit 100;'''
+    ss = db_pool.execute(sql)
+    q = [x[0] for x in ss.fetchall()]
+    print(q)
+
