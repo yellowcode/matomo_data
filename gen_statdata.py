@@ -398,7 +398,7 @@ class StatData(object):
         result = pd.read_sql(sql, self.pgconn)
         pros = [x for x, y in zip(result['id_sort'], result['eventname']) if 'id_sort' in x and y == 1]
         result.drop('id_sort', axis=1, inplace=True)
-        result = result.groupby(['surl', 'eventaction']).agg({'num': 'sum'}).reset_index()
+        result = result.groupby(['surl', 'eventaction', 'eventname']).agg({'num': 'sum'}).reset_index()
         ret = []
         for index, val in result.iterrows():
             if val['eventaction'] not in '0123456789':
@@ -410,7 +410,7 @@ class StatData(object):
                         stp = self.sort_map.get(tp)
                     else:
                         stp = 1
-                response = self.get_product(category_id=int(val['eventaction']), page=1, sort_type=stp)
+                response = self.get_product(category_id=int(val['eventaction']), page=int(val['eventname']), sort_type=stp)
                 ret = ret + [{'product_id': int(x.get('product_id')), 'ad_show': val['num']} for x in response]
             except Exception as e:
                 print('list_click event url error: ', e)
