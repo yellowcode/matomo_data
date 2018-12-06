@@ -401,7 +401,7 @@ class StatData(object):
         result = result.groupby(['surl', 'eventaction', 'eventname']).agg({'num': 'sum'}).reset_index()
         ret = []
         for index, val in result.iterrows():
-            if val['eventaction'] not in '0123456789':
+            if val['eventaction'][0] not in '0123456789':
                 continue
             try:
                 stp = 1
