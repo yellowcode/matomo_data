@@ -115,7 +115,7 @@ class ShoppingSort(object):
         return df
 
     def write_data(self, data):
-        sql = '''update cc_products set sort={1} where product_id='{0}';'''
+        sql = '''update cc_products set sort={1} where id='{0}';'''
         for p, v in zip(data['product_id'], data['sort']):
             e_sql = sql.format(p, v)
             print(e_sql)
