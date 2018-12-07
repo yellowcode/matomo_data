@@ -112,7 +112,24 @@ class ShoppingSort(object):
         re_data.sort_values(by='sort_value', ascending=False, inplace=True)  # 按一列排序
         re_data['sort'] = [x for x in range(1, len(re_data.index) + 1)]
         df = re_data[['product_id', 'sort']]
+
+        # d_word = str(tuple(re_data['product_id'])).replace("'", '"')
+        # sql = '''select product_id,create_id from from product where product_id not in {0} ORDER BY create DESC;'''.format(d_word)
+        # pdata = pd.read_sql(sql, self.pgconn)
+        # pdata['sort'] = [x for x in range(len(d_word) + 1, len(pdata.index) + len(d_word) + 1)]
+        # pdata.drop('create_id', axis=1, inplace=True)
+        # df.append(pdata, ignore_index=False)
+
         return df
+
+    def no_show_product(self, re_data):
+        d_word = str(tuple(re_data['product_id'])).replace("'", '"')
+        sql = ('''select product_id from stat_space.product 
+        where product_id not in {0} ORDER BY create_time DESC;''').format(d_word)
+        pdata = pd.read_sql(sql, self.pgconn)
+        pdata['sort'] = [x for x in range(len(d_word) + 1, len(pdata.index) + len(d_word) + 1)]
+        print(pdata.head(50))
+        return pdata
 
     def write_data(self, data):
         sql = '''update cc_products set sort={1} where id='{0}';'''
@@ -126,4 +143,5 @@ class ShoppingSort(object):
 if __name__ == '__main__':
     wv = ShoppingSort()
     df = wv.cul_run('2018-12-05')
+    df = wv.no_show_product(df)
     wv.write_data(df)
