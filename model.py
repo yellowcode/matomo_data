@@ -115,11 +115,11 @@ class ShoppingSort(object):
         return df
 
     def write_data(self, data):
-        sql = '''update dwstyle set sort={1} where product_id={0};'''
-
+        sql = '''update cc_products set sort={1} where product_id={0};'''
         for p, v in zip(data['product_id'], data['sort']):
-            print(p, ': ', v)
-            self.mysql_conn.execute(sql.format(p, v))
+            e_sql = sql.format(p, v)
+            print(e_sql)
+            self.mysql_conn.execute(e_sql)
         self.mysql_conn.commit()
 
 
