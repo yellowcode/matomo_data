@@ -113,6 +113,7 @@ class ShoppingSort(object):
         re_data['sort'] = [x for x in range(1, len(re_data.index) + 1)]
         df = re_data[['product_id', 'sort']]
 
+        print(df.head(50))
         # d_word = str(tuple(re_data['product_id'])).replace("'", '"')
         # sql = '''select product_id,create_id from from product where product_id not in {0} ORDER BY create DESC;'''.format(d_word)
         # pdata = pd.read_sql(sql, self.pgconn)
@@ -128,20 +129,26 @@ class ShoppingSort(object):
         where product_id not in {0} ORDER BY create_time DESC;''').format(d_word)
         pdata = pd.read_sql(sql, self.pgconn)
         pdata['sort'] = [x for x in range(len(d_word) + 1, len(pdata.index) + len(d_word) + 1)]
-        print(pdata.head(50))
+        # print(pdata.head(50))
         return pdata
 
     def write_data(self, data):
         sql = '''update cc_products set sort={1} where id='{0}';'''
+        n = 0
         for p, v in zip(data['product_id'], data['sort']):
+            n = n + 1
             e_sql = sql.format(p, v)
             print(e_sql)
             self.mysql_conn.execute(e_sql)
+
+            if n % 500 == 0:
+                self.mysql_conn.commit()
+
         self.mysql_conn.commit()
 
 
 if __name__ == '__main__':
     wv = ShoppingSort()
     df = wv.cul_run('2018-12-05')
-    df = wv.no_show_product(df)
+    # df = wv.no_show_product(df)
     wv.write_data(df)
