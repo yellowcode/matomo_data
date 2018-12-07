@@ -17,6 +17,7 @@ class ShoppingSort(object):
     def __init__(self):
         pgdb = PgsqlConn()
         self.pgconn = pgdb.pgsql_conn()
+        self.mysql_conn = pgdb.mysql_sqlalchemy_conn()
 
     def wilson_score(self, pos, total, p_z=2.0):
         """
@@ -67,7 +68,7 @@ class ShoppingSort(object):
         return ret
 
     def test_calculate_sort(self, x_date):
-        sql = '''SELECT * from stat_space.shopping_params_copy1 where date='{0}';'''.format(x_date)
+        sql = '''SELECT * from stat_space.shopping_params where date='{0}';'''.format(x_date)
         df = pd.read_sql(sql, self.pgconn)
         df.fillna(0, inplace=True)
         for c_click, c_show in [('list_click', 'list_show'), ('index_click', 'index_show'), ('promotion_click', 'promotion_show'),
@@ -80,7 +81,6 @@ class ShoppingSort(object):
     def weight_sort(self, data):
         ret = {}
         for col in data:
-            print(col)
             if 'w_' not in col:
                 continue
             avg = round(data[col].mean(), 7)
@@ -110,9 +110,21 @@ class ShoppingSort(object):
                                  re_data[cols[7]]*re_w.get(cols[7])
 
         re_data.sort_values(by='sort_value', ascending=False, inplace=True)  # 按一列排序
-        return re_data['sort_value']
+        re_data['sort'] = [x for x in range(1, len(re_data.index) + 1)]
+        df = re_data[['product_id', 'sort']]
+        return df
+
+    def write_data(self, data):
+        sql = '''update dwstyle sort={1} where product_id={0};'''
+
+
+        for p, v in zip(data['product_id'], data['sort']):
+            print(p, ': ', v)
+            self.mysql_conn.execute(sql.format(p, v))
+        self.mysql_conn.commit()
 
 
 if __name__ == '__main__':
     wv = ShoppingSort()
-    wv.cul_run('2018-12-04')
+    df = wv.cul_run('2018-12-05')
+    wv.write_data(df)
