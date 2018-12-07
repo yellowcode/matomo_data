@@ -15,7 +15,7 @@ class PgsqlConn(object):
     def __init__(self):
         self.__engine_space = create_engine('postgresql://shengyt:syt2018@47.90.97.255:54320/matomo')
         # self.__engine_space = create_engine('postgresql://shengyt:syt2018@localhost:54320/matomo')
-        self.__mysql_space = create_engine('mysql://root:fGrIyMAiPS9wPcE8HnW8@localhost:3306/dwstyle')
+        self.__mysql_space = create_engine('mysql+pymysql://root:fGrIyMAiPS9wPcE8HnW8@localhost:3306/dwstyle')
 
     def pgsql_conn(self):
         """

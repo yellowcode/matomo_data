@@ -9,6 +9,7 @@
 import pandas as pd
 from pgsql_pool import PgsqlConn
 
+
 if __name__ == '__main__':
     pgdb = PgsqlConn()
     pgconn = pgdb.pgsql_conn()

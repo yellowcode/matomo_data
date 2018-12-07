@@ -115,8 +115,7 @@ class ShoppingSort(object):
         return df
 
     def write_data(self, data):
-        sql = '''update dwstyle sort={1} where product_id={0};'''
-
+        sql = '''update dwstyle set sort={1} where product_id={0};'''
 
         for p, v in zip(data['product_id'], data['sort']):
             print(p, ': ', v)
