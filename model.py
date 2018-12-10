@@ -181,10 +181,10 @@ class ShoppingSort(object):
             e_sql = sql.format(p, v, s, d)
             self.pgconn.execute(e_sql)
 
-            if n % 500 == 0:
-                self.mysql_conn.commit()
-
-        self.mysql_conn.commit()
+        #     if n % 500 == 0:
+        #         self.mysql_conn.commit()
+        #
+        # self.mysql_conn.commit()
 
 
 if __name__ == '__main__':
