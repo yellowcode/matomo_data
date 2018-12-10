@@ -143,7 +143,7 @@ class ShoppingSort(object):
 
     def weigth_avg(self, data):
         ws = [1.1, 1.4, 1.7, 2.0, 2.3, 2.6, 2.9]
-        data_ws = [(k, v) for k, v in zip(data, ws) if k*1000000 > 1]
+        data_ws = [(k, v) for k, v in zip(data, ws) if k and k*1000000 > 1]
         return round(np.average([x for x, y in data_ws], weights=[y for x, y in data_ws]), 7)
 
     def save_data(self, x_date):
@@ -158,7 +158,7 @@ class ShoppingSort(object):
         # yesterday = datetime.date.today() - datetime.timedelta(days=1)
         yesterday = datetime.datetime.strptime(x_date, '%Y-%m-%d').weekday()
         field = week_map[yesterday - 1]
-        df[field] = df['value']
+        df[field] = round(df['value'], 7)
         df.fillna(0.00)
         sql = '''update stat_space.sort_result set {2}={1} where product_id={0};'''
         n = 0
@@ -166,11 +166,7 @@ class ShoppingSort(object):
             n = n + 1
             e_sql = sql.format(p, v, field)
             self.pgconn.execute(e_sql)
-
-        #     if n % 500 == 0:
-        #         self.sqlalchemy_conn.commit()
-        #
-        # self.sqlalchemy_conn.commit()
+            print('today is ', field)
 
     def sort_run(self, x_date):
         sql = ('''select 'product_id', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' 
@@ -188,16 +184,11 @@ class ShoppingSort(object):
             n = n + 1
             e_sql = sql.format(p, v, s, d)
             self.pgconn.execute(e_sql)
-        #
-        #     if n % 500 == 0:
-        #         self.sqlalchemy_conn.commit()
-        #
-        # self.sqlalchemy_conn.commit()
 
 
 if __name__ == '__main__':
     wv = ShoppingSort()
-    for xd in ["2018-12-05", "2018-12-06", "2018-12-07", "2018-12-08", "2018-12-09"]:
+    for xd in ["2018-12-04", "2018-12-05", "2018-12-06", "2018-12-07", "2018-12-08", "2018-12-09"]:
         print(xd)
         wv.save_data(xd)
 
