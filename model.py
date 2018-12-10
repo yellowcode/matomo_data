@@ -159,10 +159,10 @@ class ShoppingSort(object):
             e_sql = sql.format(p, v, field)
             self.pgconn.execute(e_sql)
 
-            if n % 500 == 0:
-                self.pgconn.commit()
-
-        self.pgconn.commit()
+        #     if n % 500 == 0:
+        #         self.pgconn.commit()
+        #
+        # self.pgconn.commit()
 
     def sort_run(self, x_date):
         sql = ('''select 'product_id', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' 
