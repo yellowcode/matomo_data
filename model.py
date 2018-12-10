@@ -159,6 +159,7 @@ class ShoppingSort(object):
         yesterday = datetime.datetime.strptime(x_date, '%Y-%m-%d').weekday()
         field = week_map[yesterday - 1]
         df[field] = df['value']
+        df.fillna(0.00)
         sql = '''update stat_space.sort_result set {2}={1} where product_id={0};'''
         n = 0
         for p, v in zip(df['product_id'], df['value']):
@@ -180,7 +181,7 @@ class ShoppingSort(object):
         df.sort_values(by='value', ascending=False, inplace=True)  # 按一列排序
         df['sort'] = [x for x in range(1, len(df.index) + 1)]
         df['date'] = x_date
-
+        df.fillna(0.00)
         sql = '''update stat_space.sort_result set value={1},sort={2},date={3} where product_id={0};'''
         n = 0
         for p, v, s, d in zip(df['product_id'], df['value'], df['sort'], df['date']):
