@@ -148,10 +148,12 @@ class ShoppingSort(object):
 
     def save_data(self, x_date):
         df = self.cul_run(x_date)
+        print(df.head(2))
         week_map = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
         # yesterday = datetime.date.today() - datetime.timedelta(days=1)
         yesterday = datetime.datetime.strptime(x_date, '%Y-%m-%d').weekday()
         field = week_map[yesterday - 1]
+        print(field)
         df[field] = df['value']
         sql = '''update stat_space.sort_result set {2}={1} where product_id={0};'''
         n = 0
