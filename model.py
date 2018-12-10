@@ -160,15 +160,31 @@ class ShoppingSort(object):
             self.pgconn.execute(e_sql)
 
             if n % 500 == 0:
-                self.mysql_conn.commit()
+                self.pgconn.commit()
 
-        self.mysql_conn.commit()
+        self.pgconn.commit()
 
-    def sort_run(self):
+    def sort_run(self, x_date):
         sql = ('''select 'product_id', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' 
         from stat_space.sort_result;''')
         df = pd.read_sql(sql, self.pgconn)
-        # df['value'] = [for x in zip(df.values)]
+        df['value'] = [self.weigth_avg([row['monday'], row['tuesday'], row['wednesday'], row['thursday'], row['friday'],
+                                        row['saturday'], row['sunday']]) for index, row in df.iterrows()]
+        df.sort_values(by='value', ascending=False, inplace=True)  # 按一列排序
+        df['sort'] = [x for x in range(1, len(df.index) + 1)]
+        df['date'] = x_date
+
+        sql = '''update stat_space.sort_result set value={1},sort={2},date={3} where id={0};'''
+        n = 0
+        for p, v, s, d in zip(df['product_id'], df['value'], df['sort'], df['date']):
+            n = n + 1
+            e_sql = sql.format(p, v, s, d)
+            self.pgconn.execute(e_sql)
+
+            if n % 500 == 0:
+                self.mysql_conn.commit()
+
+        self.mysql_conn.commit()
 
 
 if __name__ == '__main__':
@@ -176,4 +192,4 @@ if __name__ == '__main__':
     for xd in ["2018-12-05", "2018-12-06", "2018-12-07", "2018-12-08", "2018-12-09"]:
         print(xd)
         wv.save_data(xd)
-
+    wv.sort_run(xd)
