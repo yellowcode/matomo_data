@@ -152,12 +152,12 @@ class ShoppingSort(object):
         yesterday = datetime.datetime.strptime(x_date, '%Y-%m-%d').weekday()
         field = week_map[yesterday - 1]
         df[field] = df['value']
-        sql = '''update cc_products set sort={1} where id='{0}';'''
+        sql = '''update cc_products set {2}={1} where id='{0}';'''
         n = 0
         for p, v in zip(df['product_id'], df['value']):
             n = n + 1
-            e_sql = sql.format(p, v)
-            self.mysql_conn.execute(e_sql)
+            e_sql = sql.format(p, v, field)
+            self.pgconn.execute(e_sql)
 
             if n % 500 == 0:
                 self.mysql_conn.commit()
@@ -174,5 +174,6 @@ class ShoppingSort(object):
 if __name__ == '__main__':
     wv = ShoppingSort()
     for xd in ["2018-12-05", "2018-12-06", "2018-12-07", "2018-12-08", "2018-12-09"]:
+        print(xd)
         wv.save_data(xd)
 
