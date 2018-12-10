@@ -157,7 +157,7 @@ class ShoppingSort(object):
         week_map = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
         # yesterday = datetime.date.today() - datetime.timedelta(days=1)
         day = datetime.datetime.strptime(x_date, '%Y-%m-%d').weekday()
-        field = week_map[day - 1]
+        field = week_map[day]
         df[field] = round(df['value'], 7)
         df.fillna(0.00)
         sql = '''update stat_space.sort_result set {2}={1} where product_id={0};'''
@@ -166,7 +166,7 @@ class ShoppingSort(object):
             n = n + 1
             e_sql = sql.format(p, v, field)
             self.pgconn.execute(e_sql)
-            print('today is ', field)
+        print('today is ', field)
 
     def sort_run(self, x_date):
         sql = ('''select 'product_id', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' 
@@ -188,7 +188,7 @@ class ShoppingSort(object):
 
 if __name__ == '__main__':
     wv = ShoppingSort()
-    for xd in ["2018-12-04", "2018-12-05", "2018-12-06", "2018-12-07", "2018-12-08", "2018-12-09"]:
+    for xd in ["2018-12-05", "2018-12-06", "2018-12-07", "2018-12-08", "2018-12-09"]:
         print(xd)
         wv.save_data(xd)
 
