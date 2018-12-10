@@ -6,6 +6,7 @@
 # 说明     :  计算模型
 
 
+import datetime
 import math
 import numpy as np
 import pandas as pd
@@ -100,7 +101,7 @@ class ShoppingSort(object):
         re_data = self.test_calculate_sort(x_date)
         re_w = self.weight_sort(re_data)
         cols = [x for x in list(re_data.columns) if 'w_' in x]
-        re_data['sort_value'] = re_data[cols[0]]*re_w.get(cols[0]) + \
+        re_data['value'] = re_data[cols[0]]*re_w.get(cols[0]) + \
                                  re_data[cols[1]]*re_w.get(cols[1]) + \
                                  re_data[cols[2]]*re_w.get(cols[2]) + \
                                  re_data[cols[3]]*re_w.get(cols[3]) + \
@@ -109,28 +110,21 @@ class ShoppingSort(object):
                                  re_data[cols[6]]*re_w.get(cols[6]) + \
                                  re_data[cols[7]]*re_w.get(cols[7])
 
-        re_data.sort_values(by='sort_value', ascending=False, inplace=True)  # 按一列排序
+        re_data.sort_values(by='value', ascending=False, inplace=True)  # 按一列排序
         re_data['sort'] = [x for x in range(1, len(re_data.index) + 1)]
-        df = re_data[['product_id', 'sort']]
+        # TODO: 增加数据生成excel文档
 
-        print(df.head(50))
-        # d_word = str(tuple(re_data['product_id'])).replace("'", '"')
-        # sql = '''select product_id,create_id from from product where product_id not in {0} ORDER BY create DESC;'''.format(d_word)
-        # pdata = pd.read_sql(sql, self.pgconn)
-        # pdata['sort'] = [x for x in range(len(d_word) + 1, len(pdata.index) + len(d_word) + 1)]
-        # pdata.drop('create_id', axis=1, inplace=True)
-        # df.append(pdata, ignore_index=False)
-
-        return df
-
-    def no_show_product(self, re_data):
-        d_word = str(tuple(re_data['product_id'])).replace("'", '"')
-        sql = ('''select product_id from stat_space.product 
-        where product_id not in {0} ORDER BY create_time DESC;''').format(d_word)
+        df = re_data[['product_id', 'value', 'sort']]
+        d_word = str(tuple(re_data['product_id']))
+        sql = ('''select product_id from stat_space.product where product_id not in {0} 
+        ORDER BY create_time DESC;''').format(d_word)
         pdata = pd.read_sql(sql, self.pgconn)
         pdata['sort'] = [x for x in range(len(d_word) + 1, len(pdata.index) + len(d_word) + 1)]
-        # print(pdata.head(50))
-        return pdata
+        pdata['value'] = float(0.00)
+        df.append(pdata, ignore_index=False)
+        df.reset_index(drop='index', inplace=True)
+
+        return df
 
     def write_data(self, data):
         sql = '''update cc_products set sort={1} where id='{0}';'''
@@ -146,9 +140,39 @@ class ShoppingSort(object):
 
         self.mysql_conn.commit()
 
+    def weigth_avg(self, data):
+        ws = [1.1, 1.4, 1.7, 2.0, 2.3, 2.6, 2.9]
+        data_ws = [(k, v) for k, v in zip(data, ws) if k*1000000 > 1]
+        return round(np.average([x for x, y in data_ws], weights=[y for x, y in data_ws]), 7)
+
+    def save_data(self, x_date):
+        df = self.cul_run(x_date)
+        week_map = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        # yesterday = datetime.date.today() - datetime.timedelta(days=1)
+        yesterday = datetime.datetime.strptime(x_date, '%Y-%m-%d').weekday()
+        field = week_map[yesterday - 1]
+        df[field] = df['value']
+        sql = '''update cc_products set sort={1} where id='{0}';'''
+        n = 0
+        for p, v in zip(df['product_id'], df['value']):
+            n = n + 1
+            e_sql = sql.format(p, v)
+            self.mysql_conn.execute(e_sql)
+
+            if n % 500 == 0:
+                self.mysql_conn.commit()
+
+        self.mysql_conn.commit()
+
+    def sort_run(self):
+        sql = ('''select 'product_id', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' 
+        from stat_space.sort_result;''')
+        df = pd.read_sql(sql, self.pgconn)
+        # df['value'] = [for x in zip(df.values)]
+
 
 if __name__ == '__main__':
     wv = ShoppingSort()
-    df = wv.cul_run('2018-12-05')
-    # df = wv.no_show_product(df)
-    wv.write_data(df)
+    for xd in ["2018-12-05", "2018-12-06", "2018-12-07", "2018-12-08", "2018-12-09"]:
+        wv.save_data(xd)
+
