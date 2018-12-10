@@ -18,6 +18,7 @@ class ShoppingSort(object):
     def __init__(self):
         pgdb = PgsqlConn()
         self.pgconn = pgdb.pgsql_conn()
+        self.sqlalchemy_conn = pgdb.sqlalchemy_conn()
         self.mysql_conn = pgdb.mysql_sqlalchemy_conn()
 
     def wilson_score(self, pos, total, p_z=2.0):
@@ -152,7 +153,7 @@ class ShoppingSort(object):
         yesterday = datetime.datetime.strptime(x_date, '%Y-%m-%d').weekday()
         field = week_map[yesterday - 1]
         df[field] = df['value']
-        sql = '''update stat_space.sort_result set {2}={1} where id={0};'''
+        sql = '''update stat_space.sort_result set {2}={1} where product_id={0};'''
         n = 0
         for p, v in zip(df['product_id'], df['value']):
             n = n + 1
@@ -160,9 +161,9 @@ class ShoppingSort(object):
             self.pgconn.execute(e_sql)
 
         #     if n % 500 == 0:
-        #         self.pgconn.commit()
+        #         self.sqlalchemy_conn.commit()
         #
-        # self.pgconn.commit()
+        # self.sqlalchemy_conn.commit()
 
     def sort_run(self, x_date):
         sql = ('''select 'product_id', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' 
@@ -174,7 +175,7 @@ class ShoppingSort(object):
         df['sort'] = [x for x in range(1, len(df.index) + 1)]
         df['date'] = x_date
 
-        sql = '''update stat_space.sort_result set value={1},sort={2},date={3} where id={0};'''
+        sql = '''update stat_space.sort_result set value={1},sort={2},date={3} where product_id={0};'''
         n = 0
         for p, v, s, d in zip(df['product_id'], df['value'], df['sort'], df['date']):
             n = n + 1
@@ -182,9 +183,9 @@ class ShoppingSort(object):
             self.pgconn.execute(e_sql)
 
         #     if n % 500 == 0:
-        #         self.mysql_conn.commit()
+        #         self.sqlalchemy_conn.commit()
         #
-        # self.mysql_conn.commit()
+        # self.sqlalchemy_conn.commit()
 
 
 if __name__ == '__main__':
