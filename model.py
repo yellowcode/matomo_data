@@ -156,8 +156,8 @@ class ShoppingSort(object):
 
         week_map = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
         # yesterday = datetime.date.today() - datetime.timedelta(days=1)
-        yesterday = datetime.datetime.strptime(x_date, '%Y-%m-%d').weekday()
-        field = week_map[yesterday - 1]
+        day = datetime.datetime.strptime(x_date, '%Y-%m-%d').weekday()
+        field = week_map[day - 1]
         df[field] = round(df['value'], 7)
         df.fillna(0.00)
         sql = '''update stat_space.sort_result set {2}={1} where product_id={0};'''
