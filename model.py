@@ -152,7 +152,7 @@ class ShoppingSort(object):
         yesterday = datetime.datetime.strptime(x_date, '%Y-%m-%d').weekday()
         field = week_map[yesterday - 1]
         df[field] = df['value']
-        sql = '''update sort_result set {2}={1} where id='{0}';'''
+        sql = '''update sort_result set {2}={1} where id={0};'''
         n = 0
         for p, v in zip(df['product_id'], df['value']):
             n = n + 1
