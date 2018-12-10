@@ -151,8 +151,8 @@ class ShoppingSort(object):
         sql = '''select product_id from stat_space.sort_result;'''
         result = self.pgconn.execute(sql)
         new_p = [{'product_id': x} for x in df['product_id'] if x not in list(result.fetchall())]
-        df = pd.DataFrame(new_p)
-        df.to_sql('sort_result', self.pgconn, schema='stat_space', if_exists='append', index=False)
+        ndp = pd.DataFrame(new_p)
+        ndp.to_sql('sort_result', self.pgconn, schema='stat_space', if_exists='append', index=False)
 
         week_map = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
         # yesterday = datetime.date.today() - datetime.timedelta(days=1)
