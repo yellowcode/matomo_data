@@ -160,12 +160,12 @@ class ShoppingSort(object):
         for p, v in zip(df['product_id'], df['value']):
             n = n + 1
             e_sql = sql.format(p, v, field)
-            self.sqlalchemy_conn.execute(e_sql)
+            self.pgconn.execute(e_sql)
 
-            if n % 500 == 0:
-                self.sqlalchemy_conn.commit()
-
-        self.sqlalchemy_conn.commit()
+        #     if n % 500 == 0:
+        #         self.sqlalchemy_conn.commit()
+        #
+        # self.sqlalchemy_conn.commit()
 
     def sort_run(self, x_date):
         sql = ('''select 'product_id', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' 
@@ -182,12 +182,12 @@ class ShoppingSort(object):
         for p, v, s, d in zip(df['product_id'], df['value'], df['sort'], df['date']):
             n = n + 1
             e_sql = sql.format(p, v, s, d)
-            self.sqlalchemy_conn.execute(e_sql)
-
-            if n % 500 == 0:
-                self.sqlalchemy_conn.commit()
-
-        self.sqlalchemy_conn.commit()
+            self.pgconn.execute(e_sql)
+        #
+        #     if n % 500 == 0:
+        #         self.sqlalchemy_conn.commit()
+        #
+        # self.sqlalchemy_conn.commit()
 
 
 if __name__ == '__main__':
