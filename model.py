@@ -148,12 +148,16 @@ class ShoppingSort(object):
 
     def save_data(self, x_date):
         df = self.cul_run(x_date)
-        print(df.head(2))
+        sql = '''select product_id from stat_space.sort_result;'''
+        result = self.pgconn.execute(sql)
+        new_p = [{'product_id': x} for x in df['product_id'] if x not in list(result.fetchall())]
+        df = pd.DataFrame(new_p)
+        df.to_sql('sort_result', self.pgconn, schema='stat_space', if_exists='append', index=False)
+
         week_map = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
         # yesterday = datetime.date.today() - datetime.timedelta(days=1)
         yesterday = datetime.datetime.strptime(x_date, '%Y-%m-%d').weekday()
         field = week_map[yesterday - 1]
-        print(field)
         df[field] = df['value']
         sql = '''update stat_space.sort_result set {2}={1} where product_id={0};'''
         n = 0
