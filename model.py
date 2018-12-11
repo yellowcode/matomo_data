@@ -20,7 +20,9 @@ class ShoppingSort(object):
         self.pgconn = pgdb.pgsql_conn()
         self.sqlalchemy_conn = pgdb.sqlalchemy_conn()
         self.mysql_conn = pgdb.mysql_sqlalchemy_conn()
-        self.sfile = '/root/project/data_files/stat_matomo.xls'
+
+        self.site = 'm.dwstyle.com'
+        self.writer = pd.ExcelWriter('/root/project/data_files/stat_matomo.xls')
 
     def wilson_score(self, pos, total, p_z=2.0):
         """
@@ -115,7 +117,8 @@ class ShoppingSort(object):
         re_data.sort_values(by='value', ascending=False, inplace=True)  # 按一列排序
         re_data['sort'] = [x for x in range(1, len(re_data.index) + 1)]
         # TODO: 增加数据生成excel文档
-        re_data.to_excel(self.sfile, sheet_name=str(x_date))
+        re_data.to_excel(self.writer, sheet_name=str(x_date))
+        self.writer.save()
 
         df = re_data[['product_id', 'value', 'sort']]
         d_word = tuple(re_data['product_id'])
@@ -147,7 +150,7 @@ class ShoppingSort(object):
         if sum(data) == 0:
             return 0.00
 
-        ws = [1.1, 1.4, 1.7, 2.0, 2.3, 2.6, 2.9]
+        ws = [1.11403, 1.4451, 1.75645, 2.05544, 2.33468, 2.6784, 2.98413]
         data_ws = [(k, v) for k, v in zip(data, ws) if k and k*1000000 > 1]
         return round(np.average([x for x, y in data_ws], weights=[y for x, y in data_ws]), 7)
 
@@ -190,6 +193,11 @@ class ShoppingSort(object):
             e_sql = sql.format(p, v, s, d)
             self.pgconn.execute(e_sql)
 
+    def write_excel(self):
+        sql = ('''select * from stat_space.sort_result;''')
+        df = pd.read_sql(sql, self.pgconn)
+        df.to_excel(self.writer, '汇总')
+        self.writer.save()
 
 if __name__ == '__main__':
     wv = ShoppingSort()
