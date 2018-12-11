@@ -195,12 +195,7 @@ class ShoppingSort(object):
         new_data.sort(key=lambda x: x.get('value'), reverse=True)
         [new_data[i].update({'sort': i+1, 'date': x_date}) for i in range(len(new_data))]
         [new_data[i].update({'value': 0.00}) for i in range(len(new_data)) if not new_data[i].get('value')]
-        # df.sort_values(by='value', ascending=False, inplace=True)  # 按一列排序
-        # df['sort'] = [x for x in range(1, len(df.index) + 1)]
-        # print(df.head())
-        # df['date'] = x_date
-        # df.fillna(0.00)
-        sql = '''update stat_space.sort_result set value={1},sort={2},date={3} where product_id={0};'''
+        sql = '''update stat_space.sort_result set value={1},sort={2},date='{3}' where product_id={0};'''
         n = 0
         for dt in new_data:
             n = n + 1
@@ -208,18 +203,21 @@ class ShoppingSort(object):
             self.pgconn.execute(e_sql)
 
     def write_excel(self):
-        sql = ('''select * from stat_space.sort_result;''')
+        sql = '''select * from stat_space.sort_result;'''
         df = pd.read_sql(sql, self.pgconn)
         df['value'].fillna(0.00)
         df['sort'].fillna(99999)
         df.to_excel(self.writer, '汇总')
-        self.writer.save()
+        self.writer.save()          # 保存excel
+        self.write_data(df)         # 更新测试站mysql的sort值
+
 
 if __name__ == '__main__':
     wv = ShoppingSort()
-    for x in '7654321':
-        wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
+    # for x in '7654321':
+    #     wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
 
+    wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
     wv.sort_run(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
     wv.write_excel()
 
