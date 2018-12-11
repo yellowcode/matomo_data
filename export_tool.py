@@ -15,5 +15,5 @@ if __name__ == '__main__':
     pgconn = pgdb.pgsql_conn()
     sql = "SELECT * FROM stat_space.shopping_params where date='2018-11-29'"
     df = pd.read_sql(sql, pgconn)
-    df.to_excel('e:/pandas_output.xls')
+    df.to_excel('/project/pandas_output.xls')
 
