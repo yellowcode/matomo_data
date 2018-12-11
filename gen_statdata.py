@@ -396,7 +396,8 @@ class StatData(object):
         and ee.url ~ '{0}.+?-c-\d+.+?(?:{2})' and pid not in {3} GROUP BY surl,id_sort,eventaction,
         eventname,pageidaction''').format(self.site, x_date, del_word, n_uids)
         result = pd.read_sql(sql, self.pgconn)
-        pros = [x for x, y in zip(result['id_sort'], result['eventname']) if 'id_sort' in x and y == 1]
+        pros = [(x, n) for x, y, n in zip(result['id_sort'], result['eventname'], result['num'])
+                if 'id_sort' in x and y == 1]
         result.drop('id_sort', axis=1, inplace=True)
         result = result.groupby(['surl', 'eventaction', 'eventname']).agg({'num': 'sum'}).reset_index()
         ret = []
@@ -416,6 +417,7 @@ class StatData(object):
                 print('list_click event url error: ', e)
                 continue
 
+        pros = [s * n for s, n in pros]
         id_sort = re.findall('\d{4,7}', ''.join(pros))
         id_sort = dict(Counter(id_sort))
         ret = ret + [{'product_id': int(k), 'ad_show': v} for k, v in id_sort.items()]
