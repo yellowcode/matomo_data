@@ -141,9 +141,13 @@ class ShoppingSort(object):
             self.mysql_conn.execute(e_sql)
 
             if n % 500 == 0:
+                print('mysql sort update: ', n)
                 self.mysql_conn.commit()
 
         self.mysql_conn.commit()
+
+        import os
+        os.system('cd /home/dwstyle/wwwroot/public;php artisan    ccshop:reflush-es    --force')
 
     def weigth_avg(self, data):
         if sum(data) == 0:
