@@ -188,9 +188,5 @@ class ShoppingSort(object):
 
 if __name__ == '__main__':
     wv = ShoppingSort()
-    for xd in ["2018-12-05", "2018-12-06", "2018-12-07", "2018-12-08", "2018-12-09"]:
-        print(xd)
-        wv.save_data(xd)
-
-    print('cul total: ')
-    wv.sort_run(xd)
+    wv.save_data(str(datetime.date.today() - datetime.timedelta(days=1)))
+    wv.sort_run(str(datetime.date.today() - datetime.timedelta(days=1)))
