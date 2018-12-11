@@ -163,7 +163,7 @@ class ShoppingSort(object):
         df = self.cul_run(x_date)
         sql = '''select product_id from stat_space.sort_result;'''
         result = self.pgconn.execute(sql)
-        product_list = set([int(x) for x in result.fetchall() if x])
+        product_list = set([int(x[0]) for x in result.fetchall() if x])
         df_list = set([int(x) for x in df['product_id'] if x])
         new_p = df_list.difference(product_list)
         if new_p:
@@ -188,18 +188,23 @@ class ShoppingSort(object):
         sql = ('''select product_id, monday, tuesday, wednesday, thursday, friday, saturday, sunday 
         from stat_space.sort_result;''')
         df = pd.read_sql(sql, self.pgconn)
-        df['value'] = [self.weigth_avg([row['monday'], row['tuesday'], row['wednesday'], row['thursday'], row['friday'],
-                                        row['saturday'], row['sunday']]) for index, row in df.iterrows()]
-        df.sort_values(by='value', ascending=False, inplace=True)  # 按一列排序
-        df['sort'] = [x for x in range(1, len(df.index) + 1)]
-        print(df.head())
-        df['date'] = x_date
-        df.fillna(0.00)
+        new_data = [{'product_id': row['product_id'],
+                     'value': self.weigth_avg([row['monday'], row['tuesday'], row['wednesday'], row['thursday'],
+                                               row['friday'], row['saturday'], row['sunday']])}
+                    for index, row in df.iterrows()]
+        new_data.sort(key=lambda x: x.get('value'), reverse=True)
+        [new_data[i].update({'sort': i+1, 'date': x_date}) for i in range(len(new_data))]
+        [new_data[i].update({'value': 0.00}) for i in range(len(new_data)) if not new_data[i].get('value')]
+        # df.sort_values(by='value', ascending=False, inplace=True)  # 按一列排序
+        # df['sort'] = [x for x in range(1, len(df.index) + 1)]
+        # print(df.head())
+        # df['date'] = x_date
+        # df.fillna(0.00)
         sql = '''update stat_space.sort_result set value={1},sort={2},date={3} where product_id={0};'''
         n = 0
-        for p, v, s, d in zip(df['product_id'], df['value'], df['sort'], df['date']):
+        for dt in new_data:
             n = n + 1
-            e_sql = sql.format(p, v, s, d)
+            e_sql = sql.format(dt.get('product_id'), dt.get('value'), dt.get('sort'), dt.get('date'))
             self.pgconn.execute(e_sql)
 
     def write_excel(self):
@@ -212,7 +217,7 @@ class ShoppingSort(object):
 
 if __name__ == '__main__':
     wv = ShoppingSort()
-    for x in '654321':
+    for x in '7654321':
         wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
 
     wv.sort_run(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
