@@ -169,7 +169,7 @@ class ShoppingSort(object):
         print('today is ', field)
 
     def sort_run(self, x_date):
-        sql = ('''select 'product_id', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' 
+        sql = ('''select product_id, monday, tuesday, wednesday, thursday, friday, saturday, sunday 
         from stat_space.sort_result;''')
         df = pd.read_sql(sql, self.pgconn)
         df['value'] = [self.weigth_avg([row['monday'], row['tuesday'], row['wednesday'], row['thursday'], row['friday'],
