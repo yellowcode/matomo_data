@@ -22,7 +22,7 @@ class ShoppingSort(object):
         self.mysql_conn = pgdb.mysql_sqlalchemy_conn()
 
         self.site = 'm.dwstyle.com'
-        self.writer = pd.ExcelWriter('/root/project/data_files/stat_matomo.xls')
+        self.writer = pd.ExcelWriter('D:/stat_matomo.xls')
 
     def wilson_score(self, pos, total, p_z=2.0):
         """
@@ -151,8 +151,13 @@ class ShoppingSort(object):
             return 0.00
 
         ws = [1.11403, 1.4451, 1.75645, 2.05544, 2.33468, 2.6784, 2.98413]
-        data_ws = [(k, v) for k, v in zip(data, ws) if k and k*1000000 > 1]
-        return round(np.average([x for x, y in data_ws], weights=[y for x, y in data_ws]), 7)
+        data_ws = [(k, v) for k, v in zip(data, ws) if k]
+        v = [x for x, y in data_ws]
+        w = [y for x, y in data_ws]
+        if w:
+            return round(np.average(v, weights=w), 7)
+        else:
+            return 0.00
 
     def save_data(self, x_date):
         df = self.cul_run(x_date)
@@ -194,14 +199,17 @@ class ShoppingSort(object):
             self.pgconn.execute(e_sql)
 
     def write_excel(self):
-        sql = ('''select * from stat_space.sort_result;''')
+        sql = ('''select * from stat_space.sort_result limit 100;''')
         df = pd.read_sql(sql, self.pgconn)
-        df.to_excel(self.writer, '汇总')
+        df.to_excel(self.writer, '汇总1')
+        df.to_excel(self.writer, '汇总2')
         self.writer.save()
 
 if __name__ == '__main__':
     wv = ShoppingSort()
-    for x in '654321':
-        wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
+    # for x in '654321':
+    #     wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
+    #
+    # wv.sort_run(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
+    wv.write_excel()
 
-    wv.sort_run(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
