@@ -20,6 +20,7 @@ class ShoppingSort(object):
         self.pgconn = pgdb.pgsql_conn()
         self.sqlalchemy_conn = pgdb.sqlalchemy_conn()
         self.mysql_conn = pgdb.mysql_sqlalchemy_conn()
+        self.sfile = '/root/project/data_files/stat_matomo.xls'
 
     def wilson_score(self, pos, total, p_z=2.0):
         """
@@ -114,7 +115,7 @@ class ShoppingSort(object):
         re_data.sort_values(by='value', ascending=False, inplace=True)  # 按一列排序
         re_data['sort'] = [x for x in range(1, len(re_data.index) + 1)]
         # TODO: 增加数据生成excel文档
-
+        re_data.to_excel(self.sfile, sheet_name=str(x_date))
 
         df = re_data[['product_id', 'value', 'sort']]
         d_word = tuple(re_data['product_id'])
@@ -192,5 +193,7 @@ class ShoppingSort(object):
 
 if __name__ == '__main__':
     wv = ShoppingSort()
-    wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
+    for x in '654321':
+        wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
+
     wv.sort_run(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
