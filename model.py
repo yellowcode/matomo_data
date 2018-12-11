@@ -115,10 +115,11 @@ class ShoppingSort(object):
         re_data['sort'] = [x for x in range(1, len(re_data.index) + 1)]
         # TODO: 增加数据生成excel文档
 
+
         df = re_data[['product_id', 'value', 'sort']]
-        d_word = str(tuple(re_data['product_id']))
+        d_word = tuple(re_data['product_id'])
         sql = ('''select product_id from stat_space.product where product_id not in {0} 
-        ORDER BY create_time DESC;''').format(d_word)
+        ORDER BY create_time DESC;''').format(str(d_word))
         pdata = pd.read_sql(sql, self.pgconn)
         pdata['sort'] = [x for x in range(len(d_word) + 1, len(pdata.index) + len(d_word) + 1)]
         pdata['value'] = float(0.00)
@@ -142,6 +143,9 @@ class ShoppingSort(object):
         self.mysql_conn.commit()
 
     def weigth_avg(self, data):
+        if sum(data) == 0:
+            return 0.00
+
         ws = [1.1, 1.4, 1.7, 2.0, 2.3, 2.6, 2.9]
         data_ws = [(k, v) for k, v in zip(data, ws) if k and k*1000000 > 1]
         return round(np.average([x for x, y in data_ws], weights=[y for x, y in data_ws]), 7)
@@ -188,5 +192,5 @@ class ShoppingSort(object):
 
 if __name__ == '__main__':
     wv = ShoppingSort()
-    wv.save_data(str(datetime.date.today() - datetime.timedelta(days=1)))
-    wv.sort_run(str(datetime.date.today() - datetime.timedelta(days=1)))
+    wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
+    wv.sort_run(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
