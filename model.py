@@ -138,7 +138,6 @@ class ShoppingSort(object):
         for p, v in zip(data['product_id'], data['sort']):
             n = n + 1
             e_sql = sql.format(p, v)
-            print(e_sql)
             self.mysql_conn.execute(e_sql)
 
             if n % 500 == 0:
