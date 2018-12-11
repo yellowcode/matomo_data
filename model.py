@@ -22,7 +22,7 @@ class ShoppingSort(object):
         self.mysql_conn = pgdb.mysql_sqlalchemy_conn()
 
         self.site = 'm.dwstyle.com'
-        self.writer = pd.ExcelWriter('D:/stat_matomo.xls')
+        self.writer = pd.ExcelWriter('/root/project/data_files/stat_matomo.xls')
 
     def wilson_score(self, pos, total, p_z=2.0):
         """
@@ -167,7 +167,7 @@ class ShoppingSort(object):
         df_list = set([int(x) for x in df['product_id'] if x])
         new_p = df_list.difference(product_list)
         if new_p:
-            ndp = pd.DataFrame(data=new_p, columns=['product_id'], dtype='int')
+            ndp = pd.DataFrame(data=list(new_p), columns=['product_id'], dtype='int')
             ndp.to_sql('sort_result', self.pgconn, schema='stat_space', if_exists='append', index=False)
 
         week_map = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
@@ -212,9 +212,9 @@ class ShoppingSort(object):
 
 if __name__ == '__main__':
     wv = ShoppingSort()
-    # for x in '654321':
-    #     wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
-    #
-    # wv.sort_run(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
+    for x in '654321':
+        wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
+
+    wv.sort_run(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
     wv.write_excel()
 
