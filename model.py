@@ -107,7 +107,7 @@ class ShoppingSort(object):
             result = dict([(str(x[0]), x[1]) for x in result.fetchall()])
             return [result.get(x) if str(x) in result else 0 for x in pls]
         elif isinstance(x_date, tuple):
-            sql = ('''SELECT product_id, sum(qty) as num FROM product_order WHERE date in {0} and order_status={2} 
+            sql = ('''SELECT product_id, sum(qty) as num FROM product_order WHERE date in {0} and order_status={1} 
             GROUP BY product_id ORDER BY num DESC''').format(str(x_date), tp)
             result = self.pgconn.execute(sql)
             result = dict([(str(x[0]), x[1]) for x in result.fetchall()])
