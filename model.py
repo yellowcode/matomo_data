@@ -102,7 +102,8 @@ class ShoppingSort(object):
         """
         if isinstance(x_date, str):
             sql = ('''SELECT product_id, sum(qty) as num FROM product_order WHERE date='{0}' and order_status={1} 
-            GROUP BY product_id ORDER BY num DESC''').format(x_date, tp)
+            GROUP BY product_id''').format(x_date, tp)
+            print(sql)
             df = pd.read_sql(sql, self.pgconn)
             result = dict([(str(x[0]), x[1]) for x in zip(df['product_id'], df['num'])])
             print(result)
@@ -116,7 +117,6 @@ class ShoppingSort(object):
             GROUP BY product_id ORDER BY num DESC''').format(x_date, tp)
             df = pd.read_sql(sql, self.pgconn)
             result = dict([(str(x[0]), x[1]) for x in zip(df['product_id'], df['num'])])
-            print(result)
             return [result.get(x) if str(x) in result else 0 for x in pls]
         else:
             return [0]*len(pls)
