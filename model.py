@@ -23,7 +23,7 @@ class ShoppingSort(object):
         self.mysql_conn = pgdb.mysql_sqlalchemy_conn()
 
         self.site = 'm.dwstyle.com'
-        self.writer = pd.ExcelWriter('/root/project/data_files/stat_matomo.xls')
+        self.writer = pd.ExcelWriter('/root/project/data_files/stat_%s.xls' % str(datetime.datetime.today().date()))
         self.excel_field = ["product_id", "order_click", "cart_click", "like_click", "total_detail_click",
                             "index_click", "index_show", "promotion_click", "promotion_show", "ad_click",
                             "ad_show", "list_click", "list_show", "search_click", "search_show", "detail_click",
@@ -89,6 +89,8 @@ class ShoppingSort(object):
         ret['w_order_click'] = ret['w_order_click'] + 0.4
         ret['w_cart_click'] = ret['w_cart_click'] + 0.3
         ret['w_like_click'] = ret['w_like_click'] + 0.2
+
+        ret = [(x, ret.get(x)/sum(ret.values())) for x in list(ret.keys())]
 
         return ret
 
@@ -256,8 +258,11 @@ class ShoppingSort(object):
         self.write_data(df)         # 更新测试站mysql的sort值
 
 
-# if __name__ == '__main__':
-#     wv = ShoppingSort()
+if __name__ == '__main__':
+    wv = ShoppingSort()
+    re_data = wv.calculate_sort('2018-12-11')
+    re_w = wv.weight_sort(re_data)
+    print(re_w)
 #     for x in '7654321':
 #         wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
 #

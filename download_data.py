@@ -116,8 +116,8 @@ class MatomoApi(object):
             response = response.json()
             if response.get('result'):
                 for dt in response.get('result'):
-                    tmp = {}
                     for prs in dt.get('order_products'):
+                        tmp = {}
                         tmp['order_id'] = dt.get('order_id')
                         tmp['order_sn'] = dt.get('order_sn')
                         tmp['order_status'] = dt.get('order_status')
