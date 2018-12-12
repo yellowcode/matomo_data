@@ -6,7 +6,7 @@
 # 说明     :  计算模型
 
 
-import os
+# import os
 import datetime
 import math
 import numpy as np
@@ -29,7 +29,7 @@ class ShoppingSort(object):
                             "ad_show", "list_click", "list_show", "search_click", "search_show", "detail_click",
                             "detail_show", "w_order_click", "w_cart_click", "w_like_click", "w_index_click",
                             "w_promotion_click", "w_ad_click", "w_list_click", "w_search_click",
-                            "value", "sort", "order", "pay", "date"]
+                            "value", "sort", "date", "category", "subcategory", "order", "pay"]
 
     def wilson_score(self, pos, total, p_z=2.0):
         """
