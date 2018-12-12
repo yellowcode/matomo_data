@@ -105,7 +105,7 @@ class ShoppingSort(object):
             GROUP BY product_id ORDER BY num DESC''').format(x_date, tp)
             df = pd.read_sql(sql, self.pgconn)
             result = dict([(str(x[0]), x[1]) for x in zip(df['product_id'], df['num'])])
-            print(list(zip(result.items()))[0:20])
+            print(result)
             return [result.get(x) if str(x) in result else 0 for x in pls]
         elif isinstance(x_date, tuple):
             if len(x_date) == 1:
@@ -116,7 +116,7 @@ class ShoppingSort(object):
             GROUP BY product_id ORDER BY num DESC''').format(x_date, tp)
             df = pd.read_sql(sql, self.pgconn)
             result = dict([(str(x[0]), x[1]) for x in zip(df['product_id'], df['num'])])
-            print(list(zip(result.items()))[0:20])
+            print(result)
             return [result.get(x) if str(x) in result else 0 for x in pls]
         else:
             return [0]*len(pls)
