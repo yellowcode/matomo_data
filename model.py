@@ -29,7 +29,7 @@ class ShoppingSort(object):
                             "ad_show", "list_click", "list_show", "search_click", "search_show", "detail_click",
                             "detail_show", "w_order_click", "w_cart_click", "w_like_click", "w_index_click",
                             "w_promotion_click", "w_ad_click", "w_list_click", "w_search_click",
-                            "value", "sort", "date"]
+                            "value", "sort", "order", "pay", "date"]
 
     def wilson_score(self, pos, total, p_z=2.0):
         """
@@ -86,8 +86,34 @@ class ShoppingSort(object):
             ret[k] = v.get('q') / q_sum
 
         # 权重可在此处调整
+        ret['w_order_click'] = ret['w_order_click'] + 0.4
+        ret['w_cart_click'] = ret['w_cart_click'] + 0.3
+        ret['w_like_click'] = ret['w_like_click'] + 0.2
 
         return ret
+
+    def stat_order(self, x_date, pls, tp=1):
+        """
+        获取订单信息
+        :param x_date: 日期
+        :param pls: porduct_id 列表
+        :param tp:  订单状态
+        :return:
+        """
+        if isinstance(x_date, str):
+            sql = ('''SELECT product_id, sum(qty) as num FROM product_order WHERE date='{1}' and order_status={2} 
+            GROUP BY product_id ORDER BY num DESC''').format(x_date, tp)
+            result = self.pgconn.execute(sql)
+            result = dict([(str(x[0]), x[1]) for x in result.fetchall()])
+            return [result.get(x) if str(x) in result else 0 for x in pls]
+        elif isinstance(x_date, tuple):
+            sql = ('''SELECT product_id, sum(qty) as num FROM product_order WHERE date in {1} and order_status={2} 
+            GROUP BY product_id ORDER BY num DESC''').format(str(x_date), tp)
+            result = self.pgconn.execute(sql)
+            result = dict([(str(x[0]), x[1]) for x in result.fetchall()])
+            return [result.get(x) if str(x) in result else 0 for x in pls]
+        else:
+            return [0]*len(pls)
 
     def cul_run(self, x_date):
         re_data = self.calculate_sort(x_date)
@@ -104,7 +130,9 @@ class ShoppingSort(object):
 
         re_data.sort_values(by='value', ascending=False, inplace=True)  # 按一列排序
         re_data['sort'] = [x for x in range(1, len(re_data.index) + 1)]
-        # TODO: 增加数据生成excel文档
+        # 增加数据生成excel文档
+        re_data['order'] = self.stat_order(str(x_date), list(re_data['product_id']), tp=1)
+        re_data['pay'] = self.stat_order(str(x_date), list(re_data['product_id']), tp=2)
         re_data.to_excel(self.writer, sheet_name=str(x_date), columns=self.excel_field)
         self.writer.save()
 
@@ -139,7 +167,7 @@ class ShoppingSort(object):
         if sum(data) == 0:
             return 0.00
 
-        ws = [1.11403, 1.4451, 1.75645, 2.05544, 2.33468, 2.6784, 2.98413]
+        ws = [0.02403, 0.1351, 0.20645, 0.27544, 0.32568, 0.3784, 0.408413]
         data_ws = [(k, v) for k, v in zip(data, ws) if k]
         v = [x for x, y in data_ws]
         w = [y for x, y in data_ws]
@@ -191,11 +219,29 @@ class ShoppingSort(object):
             e_sql = sql.format(dt.get('product_id'), dt.get('value'), dt.get('sort'), dt.get('date'))
             self.pgconn.execute(e_sql)
 
+    def get_dates(self, n):
+        """
+        从今天起的几天
+        :param n: 天数
+        :return:
+        """
+        if n < 1:
+            return
+
+        days = []
+        for x in range(0, n):
+            days.append(str((datetime.datetime.today() - datetime.timedelta(days=x+1)).date()))
+
+        return tuple(days)
+
     def write_excel(self):
         sql = '''select * from stat_space.sort_result;'''
         df = pd.read_sql(sql, self.pgconn)
         df['value'].fillna(0.00)
         df['sort'].fillna(99999)
+        df['day1'] = self.stat_order(self.get_dates(1), list(df['product_id']), tp=1)
+        df['day3'] = self.stat_order(self.get_dates(3), list(df['product_id']), tp=1)
+        df['day7'] = self.stat_order(self.get_dates(7), list(df['product_id']), tp=1)
         df.to_excel(self.writer, '汇总')
         self.writer.save()          # 保存excel
         self.write_data(df)         # 更新测试站mysql的sort值
@@ -203,9 +249,9 @@ class ShoppingSort(object):
 
 if __name__ == '__main__':
     wv = ShoppingSort()
-    # for x in '7654321':
-    #     wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
+    for x in '7654321':
+        wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
 
-    wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
+    # wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
     wv.sort_run(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
     wv.write_excel()
