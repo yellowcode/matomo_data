@@ -404,8 +404,8 @@ class MatomoApi(object):
         n = 0
         for val in result.fetchall():
             n = n + 1
-            order_sn = order_sn + [val[0]] * val[1]
-            # order_sn.append(val[0])
+            # order_sn = order_sn + [val[0]] * val[1]
+            order_sn.append(val[0])
             if n % 10 == 0:
                 try:
                     resp = self.get_order_product(','.join(order_sn))
