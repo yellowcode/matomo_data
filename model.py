@@ -29,7 +29,7 @@ class ShoppingSort(object):
                             "ad_show", "list_click", "list_show", "search_click", "search_show", "detail_click",
                             "detail_show", "w_order_click", "w_cart_click", "w_like_click", "w_index_click",
                             "w_promotion_click", "w_ad_click", "w_list_click", "w_search_click",
-                            "value", "sort", "date", "category", "subcategory", "order", "pay"]
+                            "value", "sort", "date", "order", "pay"]
 
     def wilson_score(self, pos, total, p_z=2.0):
         """
@@ -90,7 +90,7 @@ class ShoppingSort(object):
         ret['w_cart_click'] = ret['w_cart_click'] + 0.3
         ret['w_like_click'] = ret['w_like_click'] + 0.2
 
-        ret = [(x, ret.get(x)/sum(ret.values())) for x in list(ret.keys())]
+        ret = dict([(x, ret.get(x)/sum(ret.values())) for x in list(ret.keys())])
 
         return ret
 
@@ -103,8 +103,12 @@ class ShoppingSort(object):
         :return:
         """
         if isinstance(x_date, str):
-            sql = ('''SELECT product_id, sum(qty) as num FROM product_order WHERE date='{0}' and order_status={1} 
-            GROUP BY product_id''').format(x_date, tp)
+            if tp == 2:
+                sql = ('''SELECT product_id, sum(qty) as num FROM product_order WHERE date='{0}' and order_status in {1}
+                GROUP BY product_id''').format(x_date, '(2,4,5,8,10,11,12)')
+            else:
+                sql = ('''SELECT product_id, sum(qty) as num FROM product_order WHERE date='{0}' 
+                                GROUP BY product_id''').format(x_date, tp)
             df = pd.read_sql(sql, self.pgconn)
             result = dict([(str(x[0]), x[1]) for x in zip(df['product_id'], df['num'])])
             return [result.get(str(x)) if str(x) in result else 0 for x in pls]
@@ -113,8 +117,12 @@ class ShoppingSort(object):
                 x_date = str(x_date).replace(',', '')
             else:
                 x_date = str(x_date)
-            sql = ('''SELECT product_id, sum(qty) as num FROM product_order WHERE date in {0} and order_status={1} 
-            GROUP BY product_id ORDER BY num DESC''').format(x_date, tp)
+            if tp == 2:
+                sql = ('''SELECT product_id, sum(qty) as num FROM product_order WHERE date in {0} and order_status in {1}
+                GROUP BY product_id''').format(x_date, '(2,4,5,8,10,11,12)')
+            else:
+                sql = ('''SELECT product_id, sum(qty) as num FROM product_order WHERE date in {0} 
+                                GROUP BY product_id''').format(x_date, tp)
             df = pd.read_sql(sql, self.pgconn)
             result = dict([(str(x[0]), x[1]) for x in zip(df['product_id'], df['num'])])
             return [result.get(str(x)) if str(x) in result else 0 for x in pls]
@@ -174,6 +182,7 @@ class ShoppingSort(object):
             return 0.00
 
         ws = [0.02403, 0.1351, 0.20645, 0.27544, 0.32568, 0.3784, 0.408413]
+        ws = [x/sum(ws) for x in ws]
         data_ws = [(k, v) for k, v in zip(data, ws) if k]
         v = [x for x, y in data_ws]
         w = [y for x, y in data_ws]
@@ -258,11 +267,11 @@ class ShoppingSort(object):
         self.write_data(df)         # 更新测试站mysql的sort值
 
 
-if __name__ == '__main__':
-    wv = ShoppingSort()
-    re_data = wv.calculate_sort('2018-12-11')
-    re_w = wv.weight_sort(re_data)
-    print(re_w)
+# if __name__ == '__main__':
+#     wv = ShoppingSort()
+#     re_data = wv.calculate_sort('2018-12-11')
+#     re_w = wv.weight_sort(re_data)
+#     print(re_w)
 #     for x in '7654321':
 #         wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
 #
