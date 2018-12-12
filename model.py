@@ -103,10 +103,8 @@ class ShoppingSort(object):
         if isinstance(x_date, str):
             sql = ('''SELECT product_id, sum(qty) as num FROM product_order WHERE date='{0}' and order_status={1} 
             GROUP BY product_id''').format(x_date, tp)
-            print(sql)
             df = pd.read_sql(sql, self.pgconn)
             result = dict([(str(x[0]), x[1]) for x in zip(df['product_id'], df['num'])])
-            print(result)
             return [result.get(x) if str(x) in result else 0 for x in pls]
         elif isinstance(x_date, tuple):
             if len(x_date) == 1:
@@ -241,13 +239,18 @@ class ShoppingSort(object):
         return tuple(days)
 
     def write_excel(self):
-        sql = '''select * from stat_space.sort_result;'''
+        sql = ('''select a.*,b.category,b.subcategory from stat_space.sort_result a, stat_space.product b 
+        where a.product_id=b.product_id;''')
         df = pd.read_sql(sql, self.pgconn)
         df['value'].fillna(0.00)
         df['sort'].fillna(99999)
-        df['day1'] = self.stat_order(self.get_dates(1), list(df['product_id']), tp=1)
-        df['day3'] = self.stat_order(self.get_dates(3), list(df['product_id']), tp=1)
-        df['day7'] = self.stat_order(self.get_dates(7), list(df['product_id']), tp=1)
+        df['order1'] = self.stat_order(self.get_dates(1), list(df['product_id']), tp=1)
+        df['order3'] = self.stat_order(self.get_dates(3), list(df['product_id']), tp=1)
+        df['order7'] = self.stat_order(self.get_dates(7), list(df['product_id']), tp=1)
+        df['pay1'] = self.stat_order(self.get_dates(1), list(df['product_id']), tp=2)
+        df['pay3'] = self.stat_order(self.get_dates(3), list(df['product_id']), tp=2)
+        df['pay7'] = self.stat_order(self.get_dates(7), list(df['product_id']), tp=2)
+        df.sort_values(by='sort', inplace=True)
         df.to_excel(self.writer, '汇总')
         self.writer.save()          # 保存excel
         self.write_data(df)         # 更新测试站mysql的sort值
