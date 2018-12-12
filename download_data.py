@@ -416,6 +416,7 @@ class MatomoApi(object):
                 order_sn = []
 
         df = pd.DataFrame(ret)
+        df['date'] = x_date
         df.to_sql('product_order', self.pgconn, if_exists='append', index=False)
 
 
