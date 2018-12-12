@@ -167,7 +167,7 @@ class ShoppingSort(object):
                 self.mysql_conn.commit()
 
         self.mysql_conn.commit()
-        os.system('cd /home/dwstyle/wwwroot/public;php artisan    ccshop:reflush-es    --force')
+        # os.system('cd /home/dwstyle/wwwroot/public;php artisan    ccshop:reflush-es    --force')
 
     def weigth_avg(self, data):
         if sum(data) == 0:
