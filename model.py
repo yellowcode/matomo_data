@@ -6,6 +6,7 @@
 # 说明     :  计算模型
 
 
+import os
 import datetime
 import math
 import numpy as np
@@ -23,6 +24,12 @@ class ShoppingSort(object):
 
         self.site = 'm.dwstyle.com'
         self.writer = pd.ExcelWriter('/root/project/data_files/stat_matomo.xls')
+        self.excel_field = ["product_id", "order_click", "cart_click", "like_click", "total_detail_click",
+                            "index_click", "index_show", "promotion_click", "promotion_show", "ad_click",
+                            "ad_show", "list_click", "list_show", "search_click", "search_show", "detail_click",
+                            "detail_show", "w_order_click", "w_cart_click", "w_like_click", "w_index_click",
+                            "w_promotion_click", "w_ad_click", "w_list_click", "w_search_click",
+                            "value", "sort", "date"]
 
     def wilson_score(self, pos, total, p_z=2.0):
         """
@@ -53,26 +60,7 @@ class ShoppingSort(object):
 
         return ret
 
-    def calculate_sort(self, x_date, filter=-1):
-        sql = '''SELECT * from stat_space.shopping_params where date='{0}';'''.format(x_date)
-        result = pd.read_sql(sql, self.pgconn)
-        result = result.fillna(0)
-        ret = {}
-        for c_click, c_show in [('list_click', 'list_show'), ('index_click', 'index_show'), ('promotion_click', 'promotion_show'),
-                                ('search_click', 'search_show'), ('ad_click', 'ad_show'), ('order_click', 'total_detail_click'),
-                                ('cart_click', 'total_detail_click'), ('like_click', 'total_detail_click')]:
-            w_list = []
-            for k, p, t in zip(result['product_id'], result[c_click], result[c_show]):
-                w_list.append({'product_id': k, 'value': self.wilson_score(p, t, k), 'params': {c_click: p, c_show: t}})
-            w_list.sort(key=lambda x: x.get('value'), reverse=True)
-            if filter > 0:
-                w_list = w_list[0:50]
-            [x.update({'index': w_list.index(x)+1}) for x in w_list]
-            ret[c_click] = {'params': c_click + '/' + c_show, 'w_sort': w_list}
-
-        return ret
-
-    def test_calculate_sort(self, x_date):
+    def calculate_sort(self, x_date):
         sql = '''SELECT * from stat_space.shopping_params where date='{0}';'''.format(x_date)
         df = pd.read_sql(sql, self.pgconn)
         df.fillna(0, inplace=True)
@@ -102,7 +90,7 @@ class ShoppingSort(object):
         return ret
 
     def cul_run(self, x_date):
-        re_data = self.test_calculate_sort(x_date)
+        re_data = self.calculate_sort(x_date)
         re_w = self.weight_sort(re_data)
         cols = [x for x in list(re_data.columns) if 'w_' in x]
         re_data['value'] = re_data[cols[0]]*re_w.get(cols[0]) + \
@@ -117,7 +105,7 @@ class ShoppingSort(object):
         re_data.sort_values(by='value', ascending=False, inplace=True)  # 按一列排序
         re_data['sort'] = [x for x in range(1, len(re_data.index) + 1)]
         # TODO: 增加数据生成excel文档
-        re_data.to_excel(self.writer, sheet_name=str(x_date))
+        re_data.to_excel(self.writer, sheet_name=str(x_date), columns=self.excel_field)
         self.writer.save()
 
         df = re_data[['product_id', 'value', 'sort']]
@@ -145,8 +133,6 @@ class ShoppingSort(object):
                 self.mysql_conn.commit()
 
         self.mysql_conn.commit()
-
-        import os
         os.system('cd /home/dwstyle/wwwroot/public;php artisan    ccshop:reflush-es    --force')
 
     def weigth_avg(self, data):
@@ -223,4 +209,3 @@ if __name__ == '__main__':
     wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
     wv.sort_run(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
     wv.write_excel()
-

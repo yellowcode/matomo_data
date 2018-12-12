@@ -103,6 +103,31 @@ class MatomoApi(object):
 
         return response
 
+    def get_order_product(self, order_id):
+        """
+        获取订单商品状态
+        :param order_id: 订单id
+        :return:
+        """
+        data = []
+        url = 'https://m.dwstyle.com/shopping/order_products?order_sn=' + order_id
+        response = requests.get(url)
+        if response.status_code == 200:
+            response = response.json()
+            if response.get('result'):
+                for dt in response.get('result'):
+                    tmp = {}
+                    for prs in dt.get('order_products'):
+                        tmp['order_id'] = dt.get('order_id')
+                        tmp['order_sn'] = dt.get('order_sn')
+                        tmp['order_status'] = dt.get('order_status')
+                        tmp['product_id'] = prs.get('id')
+                        tmp['qty'] = prs.get('qty')
+                        tmp['price'] = prs.get('price')
+                        data.append(tmp)
+
+        return data
+
     def parse_json(self, dct):
         """
         解析单条json
@@ -368,6 +393,31 @@ class MatomoApi(object):
         df.drop('price', axis=1, inplace=True)
         df.drop('timestamp', axis=1, inplace=True)
         df.to_sql('product', self.pgconn, schema='stat_space', if_exists='append', index=False)
+
+    def save_order_product(self, x_date):
+        sql = ('''SELECT substring(url from 'payment-(\d+)-') as order_id, count(1) as num FROM goal 
+        where to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and goalname='下订单' and url ~ '{0}'
+        GROUP BY order_id;''').format(self.site.replace('https://', ''), x_date)
+        result = self.pgconn.execute(sql)
+        ret = []
+        order_sn = []
+        n = 0
+        for val in result.fetchall():
+            n = n + 1
+            order_sn = order_sn + [val[0]] * val[1]
+            # order_sn.append(val[0])
+            if n % 10 == 0:
+                try:
+                    resp = self.get_order_product(','.join(order_sn))
+                except Exception as e:
+                    print('order product data error: ', e)
+                    resp = []
+                ret = ret + resp
+                order_sn = []
+
+        df = pd.DataFrame(ret)
+        df.to_sql('product_order', self.pgconn, if_exists='append', index=False)
+
 
 
 # if __name__ == '__main__':
