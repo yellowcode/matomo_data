@@ -101,7 +101,7 @@ class ShoppingSort(object):
         :return:
         """
         if isinstance(x_date, str):
-            sql = ('''SELECT product_id, sum(qty) as num FROM product_order WHERE date='{1}' and order_status={2} 
+            sql = ('''SELECT product_id, sum(qty) as num FROM product_order WHERE date='{0}' and order_status={1} 
             GROUP BY product_id ORDER BY num DESC''').format(x_date, tp)
             result = self.pgconn.execute(sql)
             result = dict([(str(x[0]), x[1]) for x in result.fetchall()])
