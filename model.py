@@ -247,11 +247,11 @@ class ShoppingSort(object):
         self.write_data(df)         # 更新测试站mysql的sort值
 
 
-if __name__ == '__main__':
-    wv = ShoppingSort()
-    for x in '7654321':
-        wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
-
-    # wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
-    wv.sort_run(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
-    wv.write_excel()
+# if __name__ == '__main__':
+#     wv = ShoppingSort()
+#     for x in '7654321':
+#         wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
+#
+#     # wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
+#     wv.sort_run(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
+#     wv.write_excel()
