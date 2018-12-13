@@ -36,11 +36,11 @@ class StatData(object):
         :param x_date: 日期
         :return:
         """
-        ret = []
+        ret = {}
         sql = ('''SELECT distinct uid FROM visit_details 
         WHERE to_char(to_timestamp(servertimestamp), 'yyyy-MM-dd')='{0}' and countrycode <> 'cn';''').format(x_date)
         result = self.pgconn.execute(sql)
-        ret.append(str(tuple([x[0] for x in result.fetchall()])))
+        ret['ua'] = str(tuple([x[0] for x in result.fetchall()]))
         #
         # sql = ('''SELECT distinct uid FROM visit_details
         # WHERE to_char(to_timestamp(servertimestamp), 'yyyy-MM-dd')='{0}' and countrycode <> 'cn';''').format(x_date)
@@ -602,5 +602,5 @@ class StatData(object):
         :return:
         """
         c_uids = self.get_visuid(x_date)
-        self.data_class_stat(x_date, c_uids[0])
-        # self.data_class_stat(x_date, c_uids[1])
+        for c in c_uids:
+            self.data_class_stat(x_date, c_uids.get(c))
