@@ -35,13 +35,14 @@ class MatomoApi(object):
         self.detail_struct = ['action', 'event', 'goal', 'ecommerceabandonedcart', 'ecommerceorder', 'itemdetails']  # itemdetails必须为末尾元素
         self.fields = self.get_table_column(self.detail_struct + ['visit_details', ])
 
-
     def get_table_column(self, tables):
         """
         :param tables: 表名
         :return:
         """
-        sql = '''select table_name, string_agg(column_name, ',') as column_name from information_schema.columns where table_schema='public' and "table_name" in {0} GROUP BY table_name;'''
+        sql = ('''select table_name, string_agg(column_name, ',') as column_name 
+        from information_schema.columns where table_schema='public' and "table_name" in {0} 
+        GROUP BY table_name;''')
         result = self.pgconn.execute(sql.format(str(tuple(tables))))
         ret = dict([(x[0], x[1].split(',')) for x in result.fetchall()])
         for x in ret:
@@ -54,7 +55,8 @@ class MatomoApi(object):
         :param vid: vid
         :return:
         """
-        sql = '''SELECT max(aa."timestamp") as ax FROM {0} aa WHERE aa.pid in (SELECT cc.uid FROM visit_details cc WHERE cc.visitorid='{1}');'''
+        sql = ('''SELECT max(aa."timestamp") as ax FROM {0} aa WHERE aa.pid in 
+        (SELECT cc.uid FROM visit_details cc WHERE cc.visitorid='{1}');''')
         ret = {}
         for tb in self.detail_struct[:-1]:
             result = self.pgconn.execute(sql.format(tb, vid))
@@ -418,7 +420,6 @@ class MatomoApi(object):
         df = pd.DataFrame(ret)
         df['date'] = x_date
         df.to_sql('product_order', self.pgconn, if_exists='append', index=False)
-
 
 
 # if __name__ == '__main__':
