@@ -152,6 +152,11 @@ class MatomoApi(object):
             if tp not in self.detail_struct:
                 continue
 
+            if tp == 'event' and 'products' in dt.get('eventname'):
+                regs = re.findall('\d+', dt.get('eventname'))
+                dt['eventname'] = regs[0]
+                dt['products'] = ','.join(regs[1:])
+
             action_uid = str(uuid.uuid1()).replace('-', '')
             customvariables = dt.pop('customVariables') if dt.get('customVariables') else []
             for strn in customvariables:
@@ -295,6 +300,12 @@ class MatomoApi(object):
             self.pgconn.execute(dsql)
             new_df.to_sql('product', self.pgconn, schema='stat_space', if_exists='append', index=False)
 
+        sql = '''SELECT product_id,category,subcategory,site,'phone' as drive_type,instock_time,create_time 
+        FROM product_record where product_id not in (select product_id FROM stat_space.product) 
+        GROUP BY product_id,category,subcategory,site,drive_type,instock_time,create_time;'''
+        df = pd.read_sql(sql, self.pgconn)
+        df.to_sql('product', self.pgconn, schema='stat_space', if_exists='append', index=False)
+
         # 勾选页中不存在于产品库中的数据
         self.check_spider_product()
         print('new index product_id ok')
@@ -421,9 +432,17 @@ class MatomoApi(object):
         df['date'] = x_date
         df.to_sql('product_order', self.pgconn, if_exists='append', index=False)
 
+    # def test(self):
+    #     sql = '''SELECT product_id,category,subcategory,site,'phone' as drive_type,instock_time,create_time
+    #     FROM product_record where product_id not in (select product_id FROM stat_space.product)
+    #     GROUP BY product_id,category,subcategory,site,drive_type,instock_time,create_time;'''
+    #     df = pd.read_sql(sql, self.pgconn)
+    #     df.to_sql('product', self.pgconn, schema='stat_space', if_exists='append', index=False)
+
 
 # if __name__ == '__main__':
 #     mapi = MatomoApi()
+#     mapi.test()
 #     # mapi.n_run(9)
 #     mapi.run((datetime.datetime.today() - datetime.timedelta(days=1)).date())
 #     mapi.save_product()  # 获取商城整站product数据
