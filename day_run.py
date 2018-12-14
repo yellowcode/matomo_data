@@ -17,8 +17,9 @@ if __name__ == '__main__':
     # mapi.n_run(9)
     mapi.run((datetime.datetime.today() - datetime.timedelta(days=1)).date())
     mapi.save_product()  # 获取商城整站product数据
-    for x in range(1, 8):
-        mapi.save_order_product(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))   # 获取订单数据
+    # for x in range(1, 8):
+    #     mapi.save_order_product(str((datetime.datetime.today() - datetime.timedelta(days=x)).date()))   # 获取订单数据
+    mapi.save_order_product(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))   # 获取订单数据
 
     # 统计数据
     sd = StatData()
