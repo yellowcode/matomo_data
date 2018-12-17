@@ -326,7 +326,7 @@ class StatData(object):
         """
         sql = ('''SELECT substring(aa.url from '-p-(\d+)\.html') as product_idv, count(1) as num FROM action aa 
         where aa.url ~ '{0}.+?-p-' and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and pid in {2}
-        GROUP BY product_idv;''').format(self.site, x_date, n_uids)
+        GROUP BY product_idv HAVING substring(aa.url from '-p-(\d+)\.html') is not null;''').format(self.site, x_date, n_uids)
         result = self.pgconn.execute(sql)
         return [{'product_id': int(x[0]), 'total_detail_click': x[1]} for x in result.fetchall()]
 
