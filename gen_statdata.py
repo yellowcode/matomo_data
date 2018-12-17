@@ -432,24 +432,22 @@ class StatData(object):
 
         return ret
 
-    def new_ad_show(self, x_date, n_uids):
-        """
-        广告曝光
-        :param x_date: 日期
-        :param n_uids: 排除国内用户
-        :return: [{},{}]
-        """
-        del_word = 'utm_source=|id_sort|bg='
-        sql = ('''SELECT url,count(1) as num FROM public."event" ee 
-        WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
-        and ee.url ~ '{0}.+?-c-\d+.+?(?:{2})' and pid in {3} 
-        GROUP BY url''').format(self.site, x_date, del_word, n_uids)
-        result = pd.read_sql(sql, self.pgconn)
-        ret = []
-        for k, v in zip(result['url'], result['num']):
-            ret = ret + []
-
-
+    # def new_ad_show(self, x_date, n_uids):
+    #     """
+    #     广告曝光
+    #     :param x_date: 日期
+    #     :param n_uids: 排除国内用户
+    #     :return: [{},{}]
+    #     """
+    #     del_word = 'utm_source=|id_sort|bg='
+    #     sql = ('''SELECT url,count(1) as num FROM public."event" ee
+    #     WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}'
+    #     and ee.url ~ '{0}.+?-c-\d+.+?(?:{2})' and pid in {3}
+    #     GROUP BY url''').format(self.site, x_date, del_word, n_uids)
+    #     result = pd.read_sql(sql, self.pgconn)
+    #     ret = []
+    #     for k, v in zip(result['url'], result['num']):
+    #         ret = ret + []
 
     def test_list_show(self, x_date, n_uids):
         """
