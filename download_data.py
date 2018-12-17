@@ -152,10 +152,10 @@ class MatomoApi(object):
             if tp not in self.detail_struct:
                 continue
 
-            if tp == 'event' and 'products' in dt.get('eventname'):
+            if tp == 'event' and 'product' in dt.get('eventname'):
                 regs = re.findall('\d+', dt.get('eventname'))
                 dt['eventname'] = regs[0]
-                dt['products'] = ','.join(regs[1:])
+                dt['product'] = ','.join(regs[1:])
 
             action_uid = str(uuid.uuid1()).replace('-', '')
             customvariables = dt.pop('customVariables') if dt.get('customVariables') else []
