@@ -94,7 +94,7 @@ class ShoppingSort(object):
         ret = dict([(x, ret.get(x)/sum(ret.values())) for x in list(ret.keys())])
 
         ret = dict(zip(["w_order_click", "w_cart_click", "w_like_click", "w_index_click", "w_promotion_click", "w_ad_click", "w_list_click", "w_search_click"],
-            [0.07938858623790132, 0.12667266091923626, 0.014597768022425558, 0.02544031311154599, 0.03919183371238166, 0.42275347754799814, 0.2757179880467552, 0.016237372401755965]))
+                       [0.1157, 0.1517, 0.0557, 0.054, 0.0882, 0.2757, 0.2103, 0.0487]))
 
         return ret
 
