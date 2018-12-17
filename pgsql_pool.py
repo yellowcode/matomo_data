@@ -61,11 +61,11 @@ class PgsqlConn(object):
         return session
 
 
-if __name__ == '__main__':
-    pgdb = PgsqlConn()
-    db_pool = pgdb.mysql_pgsql_conn()
-    sql = '''select id,rating,sort from cc_products limit 100;'''
-    ss = db_pool.execute(sql)
-    q = [x[0] for x in ss.fetchall()]
-    print(q)
+# if __name__ == '__main__':
+#     pgdb = PgsqlConn()
+#     db_pool = pgdb.mysql_pgsql_conn()
+#     sql = '''select id,rating,sort from cc_products limit 100;'''
+#     ss = db_pool.execute(sql)
+#     q = [x[0] for x in ss.fetchall()]
+#     print(q)
 
