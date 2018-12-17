@@ -155,7 +155,7 @@ class MatomoApi(object):
             if tp == 'event' and dt.get('eventName') and 'product' in dt.get('eventName'):
                 regs = re.findall('\d+', dt.get('eventName'))
                 dt['eventname'] = regs[0]
-                dt['product'] = ','.join(regs[1:])
+                # dt['product'] = ','.join(regs[1:])
 
             action_uid = str(uuid.uuid1()).replace('-', '')
             customvariables = dt.pop('customVariables') if dt.get('customVariables') else []
