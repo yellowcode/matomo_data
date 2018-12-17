@@ -369,7 +369,7 @@ class StatData(object):
         FROM action where to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{0}' and url ~ '{1}.+?-p-' and pid in {2} 
         GROUP BY prod, pageidrefaction HAVING pageidrefaction in {3}'''.format(x_date, self.site, n_uids, result)
         result = self.pgconn.execute(c_sql)
-        return [{'product_id': int(x[0]), 'list_click': x[-1]} for x in result.fetchall()]
+        return [{'product_id': int(x[0]), 'list_click': x[-1]} for x in result.fetchall() if x[0]]
 
     def test_ad_click(self, x_date, n_uids):
         """
@@ -431,6 +431,25 @@ class StatData(object):
         ret = ret + [{'product_id': int(k), 'ad_show': v} for k, v in id_sort.items()]
 
         return ret
+
+    def new_ad_show(self, x_date, n_uids):
+        """
+        广告曝光
+        :param x_date: 日期
+        :param n_uids: 排除国内用户
+        :return: [{},{}]
+        """
+        del_word = 'utm_source=|id_sort|bg='
+        sql = ('''SELECT url,count(1) as num FROM public."event" ee 
+        WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
+        and ee.url ~ '{0}.+?-c-\d+.+?(?:{2})' and pid in {3} 
+        GROUP BY url''').format(self.site, x_date, del_word, n_uids)
+        result = pd.read_sql(sql, self.pgconn)
+        ret = []
+        for k, v in zip(result['url'], result['num']):
+            ret = ret + []
+
+
 
     def test_list_show(self, x_date, n_uids):
         """
