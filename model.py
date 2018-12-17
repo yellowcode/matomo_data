@@ -21,6 +21,7 @@ class ShoppingSort(object):
         self.pgconn = pgdb.pgsql_conn()
         self.sqlalchemy_conn = pgdb.sqlalchemy_conn()
         self.mysql_conn = pgdb.mysql_sqlalchemy_conn()
+        self.sort_mysql = pgdb.sort_mysql_conn()
 
         self.site = 'm.dwstyle.com'
         self.writer = pd.ExcelWriter('/root/project/data_files/stat_%s.xls' % str(datetime.datetime.today().date()))
@@ -92,7 +93,6 @@ class ShoppingSort(object):
 
         ret = dict([(x, ret.get(x)/sum(ret.values())) for x in list(ret.keys())])
 
-        # 例:
         ret = dict(zip(["w_order_click", "w_cart_click", "w_like_click", "w_index_click", "w_promotion_click", "w_ad_click", "w_list_click", "w_search_click"],
             [0.07938858623790132, 0.12667266091923626, 0.014597768022425558, 0.02544031311154599, 0.03919183371238166, 0.42275347754799814, 0.2757179880467552, 0.016237372401755965]))
 
@@ -152,6 +152,7 @@ class ShoppingSort(object):
         re_data['order'] = self.stat_order(str(x_date), list(re_data['product_id']), tp=1)
         re_data['pay'] = self.stat_order(str(x_date), list(re_data['product_id']), tp=2)
         re_data.to_excel(self.writer, sheet_name=str(x_date), columns=self.excel_field)
+        re_data.to_sql('stat_day', self.sort_mysql, if_exists='append', index=False)
         self.writer.save()
 
         df = re_data[['product_id', 'value', 'sort']]
@@ -267,6 +268,7 @@ class ShoppingSort(object):
         df['pay7'] = self.stat_order(self.get_dates(7), list(df['product_id']), tp=2)
         df.sort_values(by='sort', inplace=True)
         df.to_excel(self.writer, '汇总')
+        df.to_sql('stat_total', self.sort_mysql, if_exists='append', index=False)
         self.writer.save()          # 保存excel
         self.write_data(df)         # 更新测试站mysql的sort值
 

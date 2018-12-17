@@ -16,6 +16,7 @@ class PgsqlConn(object):
         self.__engine_space = create_engine('postgresql://shengyt:syt2018@47.90.97.255:54320/matomo')
         # self.__engine_space = create_engine('postgresql://shengyt:syt2018@localhost:54320/matomo')
         self.__mysql_space = create_engine('mysql+pymysql://root:fGrIyMAiPS9wPcE8HnW8@localhost:3306/dwstyle')
+        self.__mysql_sort = create_engine('mysql+pymysql://root:root@154.48.235.112:3306/sort')
 
     def pgsql_conn(self):
         """
@@ -44,6 +45,21 @@ class PgsqlConn(object):
         S = sessionmaker(bind=self.__mysql_space)
         session = S()
         return session
+
+    def sort_mysql_conn(self):
+        """
+        :return: 数据仓库 sqlalchemy模板create_engine
+        """
+        return self.__mysql_space
+
+    def sort_sqlalchemy_mysql_conn(self):
+        """
+        :return:  :return: 数据仓库链接对象
+        """
+        S = sessionmaker(bind=self.__mysql_space)
+        session = S()
+        return session
+
 
 if __name__ == '__main__':
     pgdb = PgsqlConn()
