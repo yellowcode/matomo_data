@@ -152,7 +152,7 @@ class MatomoApi(object):
             if tp not in self.detail_struct:
                 continue
 
-            if tp == 'event' and 'product' in dt.get('eventname'):
+            if tp == 'event' and 'product' in dt.get('eventName'):
                 regs = re.findall('\d+', dt.get('eventname'))
                 dt['eventname'] = regs[0]
                 dt['product'] = ','.join(regs[1:])
