@@ -200,6 +200,7 @@ class ShoppingSort(object):
 
     def save_data(self, x_date):
         df = self.cul_run(x_date)
+        print(df.head())
         # sql = '''select product_id from stat_space.sort_result;'''
         # result = self.pgconn.execute(sql)
         # product_list = set([int(x[0]) for x in result.fetchall() if x])
