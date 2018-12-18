@@ -154,8 +154,11 @@ class ShoppingSort(object):
         re_data.to_excel(self.writer, sheet_name=str(x_date), columns=self.excel_field)
         self.writer.save()
 
+        # 转存mysql分析权重
         mysql_redata = re_data.drop('value', axis=1)
         mysql_redata.drop('sort', axis=1, inplace=True)
+        mysql_redata.drop('detail_click', axis=1, inplace=True)
+        mysql_redata.drop('detail_show', axis=1, inplace=True)
         sfield = ["order_click","cart_click","like_click","total_detail_click","index_click","index_show","promotion_click",
                   "promotion_show","ad_click","ad_show","list_click","list_show","search_click","search_show"]
         for x in sfield:
