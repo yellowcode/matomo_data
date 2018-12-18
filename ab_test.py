@@ -124,6 +124,8 @@ class AbTest(object):
         actiondetails = dct.pop('actionDetails')
         ret['visit_details'] = dict([(k.lower(), v) for k, v in dct.items() if k.lower() in self.fields.get('visit_details')])
         ret['visit_details'].update({'uid': visit_uid})
+        cvs = dct.get('customVariables')
+        ret['user_type'] = cvs.get('customVariableValue1') if cvs else ''
 
         # sort_val = self.get_max_vid(ret.get('visitorid'))     # 访问者的访问事件记录递增
         for x in self.detail_struct:
@@ -238,8 +240,8 @@ class AbTest(object):
             ln += 1
         print(datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S'))
 
-    # def shopping_change(self, x_date):
-    #     sql = ''''''
+    def shopping_change(self, x_date):
+        sql = ''''''
 
 
 if __name__ == '__main__':
