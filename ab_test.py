@@ -244,7 +244,7 @@ class AbTest(object):
         dct = dict(zip(["用户注册", "订单支付", "商品加购", "下订单", "支付成功"],
                        ["user_register", "order_pay", "cart", "order", "pay_success"]))
         sql = ('''SELECT goalname,count(1) as num FROM goal where pid in 
-        (SELECT DISTINCT uid FROM public.visit_details where user_type='{1}' 
+        (SELECT DISTINCT uid FROM abtest.visit_details where user_type='{1}' 
         and to_char(to_timestamp(servertimestamp), 'yyyy-MM-dd')='{0}') 
         GROUP BY goalname''')
         tp = ['normal', 'is_robot']
@@ -258,8 +258,8 @@ class AbTest(object):
         df.to_sql('shopping_change', self.pgconn, schema='abtest', if_exists='append', index=False)
 
 
-if __name__ == '__main__':
-    abtest = AbTest()
+# if __name__ == '__main__':
+#     abtest = AbTest()
     # abtest.n_run(9)
     # abtest.run((datetime.datetime.today() - datetime.timedelta(days=1)).date())
-    abtest.shopping_change('2018-12-13')
+    # abtest.shopping_change('2018-12-13')
