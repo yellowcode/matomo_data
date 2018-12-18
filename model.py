@@ -152,7 +152,7 @@ class ShoppingSort(object):
         re_data['order'] = self.stat_order(str(x_date), list(re_data['product_id']), tp=1)
         re_data['pay'] = self.stat_order(str(x_date), list(re_data['product_id']), tp=2)
         re_data.to_excel(self.writer, sheet_name=str(x_date), columns=self.excel_field)
-        re_data.to_sql('stat_day', self.sort_mysql, if_exists='append', index=False)
+        re_data.to_sql('statday', self.sort_mysql, if_exists='append', index=False)
         self.writer.save()
 
         df = re_data[['product_id', 'value', 'sort']]
