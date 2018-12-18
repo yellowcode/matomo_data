@@ -50,13 +50,13 @@ class PgsqlConn(object):
         """
         :return: 数据仓库 sqlalchemy模板create_engine
         """
-        return self.__mysql_space
+        return self.__mysql_sort
 
     def sort_sqlalchemy_mysql_conn(self):
         """
         :return:  :return: 数据仓库链接对象
         """
-        S = sessionmaker(bind=self.__mysql_space)
+        S = sessionmaker(bind=self.__mysql_sort)
         session = S()
         return session
 
