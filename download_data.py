@@ -140,7 +140,9 @@ class MatomoApi(object):
         visit_uid = str(uuid.uuid1()).replace('-', '')
         actiondetails = dct.pop('actionDetails')
         ret['visit_details'] = dict([(k.lower(), v) for k, v in dct.items() if k.lower() in self.fields.get('visit_details')])
-        ret['visit_details'].update({'uid': visit_uid})
+        cvs = dct.get('customVariables')
+        cvs = cvs.get('1').get('customVariableValue1') if cvs else ''
+        ret['visit_details'].update({'uid': visit_uid, 'user_type': cvs})
 
         # sort_val = self.get_max_vid(ret.get('visitorid'))     # 访问者的访问事件记录递增
         for x in self.detail_struct:

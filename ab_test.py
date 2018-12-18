@@ -241,11 +241,29 @@ class AbTest(object):
         print(datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S'))
 
     def shopping_change(self, x_date):
-        sql = ''''''
+        dct = dict(zip(["用户注册", "订单支付", "商品加购", "下订单", "支付成功"],
+                       ["user_register", "order_pay", "cart", "order", "pay_success"]))
+        sql = ('''SELECT goalname,count(1) as num FROM goal where pid in 
+        (SELECT DISTINCT uid FROM public.visit_details where user_type='{1}' 
+        and to_char(to_timestamp(servertimestamp), 'yyyy-MM-dd')='{0}') 
+        GROUP BY goalname''')
+        tp = ['normal', 'is_robot']
+        result_normal = pd.read_sql(sql.format(x_date, tp[0]), self.pgconn)
+        result_reboot = pd.read_sql(sql.format(x_date, tp[1]), self.pgconn)
+        result_normal = [{dct.get(k), v} for k, v in zip(result_normal['goalname'], result_normal['num'])]
+        result_reboot = [{dct.get(k), v} for k, v in zip(result_reboot['goalname'], result_reboot['num'])]
+        result_normal = pd.DataFrame(result_normal)
+        result_reboot = pd.DataFrame(result_reboot)
+        result_normal['date'] = x_date
+        result_normal['user_type'] = tp[0]
+        result_reboot['date'] = x_date
+        result_reboot['user_type'] = tp[1]
+        result_normal.to_sql('shopping_change', self.pgconn, schema='abtest', if_exists='append', index=False)
+        result_reboot.to_sql('shopping_change', self.pgconn, schema='abtest', if_exists='append', index=False)
 
 
 if __name__ == '__main__':
     abtest = AbTest()
     # abtest.n_run(9)
-    abtest.run((datetime.datetime.today() - datetime.timedelta(days=1)).date())
-
+    # abtest.run((datetime.datetime.today() - datetime.timedelta(days=1)).date())
+    abtest.shopping_change('2018-12-13')
