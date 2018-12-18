@@ -156,6 +156,11 @@ class ShoppingSort(object):
 
         mysql_redata = re_data.drop('value', axis=1)
         mysql_redata.drop('sort', axis=1, inplace=True)
+        sfield = ["order_click","cart_click","like_click","total_detail_click","index_click","index_show",
+                  "promotion_click","promotion_show","ad_click","ad_show","list_click","list_show","search_click",
+                  "search_show","detail_click","detail_show"]
+        for x in sfield:
+            mysql_redata[x].astype(int)
         print(mysql_redata.head())
         mysql_redata.to_sql('statday', self.sort_mysql, if_exists='append', index=False)
 
