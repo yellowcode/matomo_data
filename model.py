@@ -155,7 +155,7 @@ class ShoppingSort(object):
         re_data.drop('value', axis=1, inplace=True)
         re_data.drop('sort', axis=1, inplace=True)
         re_data.to_sql('statday', self.sort_mysql, if_exists='append', index=False)
-        self.writer.save()
+        # self.writer.save()
 
         df = re_data[['product_id', 'value', 'sort']]
         d_word = tuple(re_data['product_id'])
