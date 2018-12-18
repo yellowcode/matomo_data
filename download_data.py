@@ -77,8 +77,8 @@ class MatomoApi(object):
         """
         n_page = 0
         while True:
-            n_page += 1
             detail_url = self.__urls.get('detail').format(t, self.__token, self.idsite, 500 * n_page)
+            n_page += 1
             print(detail_url)
             try:
                 response = requests.get(detail_url, headers=self.hd).json()
