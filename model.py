@@ -200,28 +200,28 @@ class ShoppingSort(object):
 
     def save_data(self, x_date):
         df = self.cul_run(x_date)
-        sql = '''select product_id from stat_space.sort_result;'''
-        result = self.pgconn.execute(sql)
-        product_list = set([int(x[0]) for x in result.fetchall() if x])
-        df_list = set([int(x) for x in df['product_id'] if x])
-        new_p = df_list.difference(product_list)
-        if new_p:
-            ndp = pd.DataFrame(data=list(new_p), columns=['product_id'], dtype='int')
-            ndp.to_sql('sort_result', self.pgconn, schema='stat_space', if_exists='append', index=False)
-
-        week_map = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-        # yesterday = datetime.date.today() - datetime.timedelta(days=1)
-        day = datetime.datetime.strptime(x_date, '%Y-%m-%d').weekday()
-        field = week_map[day]
-        df[field] = round(df['value'], 7)
-        df.fillna(0.00)
-        sql = '''update stat_space.sort_result set {2}={1} where product_id={0};'''
-        n = 0
-        for p, v in zip(df['product_id'], df['value']):
-            n = n + 1
-            e_sql = sql.format(p, v, field)
-            self.pgconn.execute(e_sql)
-        print('today is ', field)
+        # sql = '''select product_id from stat_space.sort_result;'''
+        # result = self.pgconn.execute(sql)
+        # product_list = set([int(x[0]) for x in result.fetchall() if x])
+        # df_list = set([int(x) for x in df['product_id'] if x])
+        # new_p = df_list.difference(product_list)
+        # if new_p:
+        #     ndp = pd.DataFrame(data=list(new_p), columns=['product_id'], dtype='int')
+        #     ndp.to_sql('sort_result', self.pgconn, schema='stat_space', if_exists='append', index=False)
+        #
+        # week_map = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        # # yesterday = datetime.date.today() - datetime.timedelta(days=1)
+        # day = datetime.datetime.strptime(x_date, '%Y-%m-%d').weekday()
+        # field = week_map[day]
+        # df[field] = round(df['value'], 7)
+        # df.fillna(0.00)
+        # sql = '''update stat_space.sort_result set {2}={1} where product_id={0};'''
+        # n = 0
+        # for p, v in zip(df['product_id'], df['value']):
+        #     n = n + 1
+        #     e_sql = sql.format(p, v, field)
+        #     self.pgconn.execute(e_sql)
+        # print('today is ', field)
 
     def sort_run(self, x_date):
         sql = ('''select product_id, monday, tuesday, wednesday, thursday, friday, saturday, sunday 
