@@ -160,9 +160,9 @@ class ShoppingSort(object):
                   "promotion_click","promotion_show","ad_click","ad_show","list_click","list_show","search_click",
                   "search_show","detail_click","detail_show"]
         for x in sfield:
-            mysql_redata[x].astype(int)
+            mysql_redata[x] = mysql_redata[x].astype(int)
         print(mysql_redata.head())
-        mysql_redata.to_sql('statday', self.sort_mysql, if_exists='append', index=False)
+        mysql_redata.to_sql('statday', self.sort_mysql, if_exists='append', index=False, chunksize=100)
 
         df = re_data[['product_id', 'value', 'sort']]
         d_word = tuple(re_data['product_id'])
