@@ -244,7 +244,7 @@ class AbTest(object):
         dct = dict(zip(["用户注册", "订单支付", "商品加购", "下订单", "支付成功"],
                        ["user_register", "order_pay", "cart", "order", "pay_success"]))
         sql = ('''SELECT goalname,count(1) as num FROM goal where pid in 
-        (SELECT DISTINCT uid FROM abtest.visit_details where user_type='{1}' 
+        (SELECT DISTINCT uid FROM public.visit_details where user_type='{1}' 
         and to_char(to_timestamp(servertimestamp), 'yyyy-MM-dd')='{0}') 
         GROUP BY goalname''')
         tp = ['normal', 'is_robot']
@@ -252,14 +252,20 @@ class AbTest(object):
         result_reboot = pd.read_sql(sql.format(x_date, tp[1]), self.pgconn)
         result_normal = dict([(dct.get(k), v) for k, v in zip(result_normal['goalname'], result_normal['num'])])
         result_reboot = dict([(dct.get(k), v) for k, v in zip(result_reboot['goalname'], result_reboot['num'])])
-        result_normal.update({'date': x_date, 'user_type': tp[0]})
-        result_reboot.update({'date': x_date, 'user_type': tp[1]})
+        u_sql = ('''select user_type,count(1) as u_num, sum(num) as t_num from
+        (SELECT user_type,visitorid,count(visitorid) as num FROM public.visit_details
+        where to_char(to_timestamp(servertimestamp), 'yyyy-MM-dd')='{0}'
+        GROUP BY user_type,visitorid) as tb GROUP BY user_type''').format(x_date)
+        dct = self.pgconn.execute(u_sql)
+        dct = dict([(x[0], x[1:]) for x in dct.fetchall()])
+        result_normal.update({'date': x_date, 'user_type': tp[0], 'u_num': dct.get(tp[0])[0], 't_num': dct.get(tp[0])[1]})
+        result_reboot.update({'date': x_date, 'user_type': tp[1], 'u_num': dct.get(tp[1])[0], 't_num': dct.get(tp[1])[1]})
         df = pd.DataFrame([result_normal, result_reboot])
         df.to_sql('shopping_change', self.pgconn, schema='abtest', if_exists='append', index=False)
 
 
-# if __name__ == '__main__':
-#     abtest = AbTest()
+if __name__ == '__main__':
+    abtest = AbTest()
     # abtest.n_run(9)
     # abtest.run((datetime.datetime.today() - datetime.timedelta(days=1)).date())
-    # abtest.shopping_change('2018-12-13')
+    abtest.shopping_change('2018-12-13')
