@@ -448,7 +448,7 @@ class MatomoApi(object):
         and product is not null and (url, eventname) in (SELECT url,eventname FROM event 
         where to_char(to_timestamp(timestamp), 'yyyy-MM-dd')='{0}' and eventcategory='categoryShow' and product is null 
         GROUP BY url,eventname) GROUP BY url,eventname,product''').format(x_date)
-        u_sql = ('''update event set product={2} where product is null and url={0} and eventname={1};''')
+        u_sql = ('''update event set product='{2}' where product is null and url='{0}' and eventname={1};''')
         result = self.pgconn.execute(sql)
         for val in result.fetchall():
             e_sql = u_sql.format(val[0], val[1], val[2])
