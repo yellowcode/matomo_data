@@ -27,6 +27,11 @@ class MatomoApi(object):
         self.__urls = {'detail': 'https://2.zerostats.com/index.php?module=API&method=Live.getLastVisitsDetails&filter_limit=500&filter_offset={3}&format=json&idSite={2}&period=day&date={0}&token_auth={1}',
                        'visitor': 'https://2.zerostats.com/index.php?module=API&method=Live.getVisitorProfile&idSite={2}&filter_limit=500&filter_offset={3}&format=JSON&token_auth={1}&visitorId={0}',
                        }
+        self.sort_map = {
+            'newness_desc': 2,
+            'price_asc': 3,
+            'price_desc': 4
+        }
 
         pgdb = PgsqlConn()
         self.pgconn = pgdb.pgsql_conn()
@@ -434,16 +439,48 @@ class MatomoApi(object):
         df['date'] = x_date
         df.to_sql('product_order', self.pgconn, if_exists='append', index=False)
 
-    # def test(self):
-    #     sql = '''SELECT product_id,category,subcategory,site,'phone' as drive_type,instock_time,create_time
-    #     FROM product_record where product_id not in (select product_id FROM stat_space.product)
-    #     GROUP BY product_id,category,subcategory,site,drive_type,instock_time,create_time;'''
-    #     df = pd.read_sql(sql, self.pgconn)
-    #     df.to_sql('product', self.pgconn, schema='stat_space', if_exists='append', index=False)
+    def product_data(self, x_date):
+        sql = ('''update event set eventname=1 where product is null and 
+        to_char(to_timestamp(timestamp), 'yyyy-MM-dd')='{0}';''').format(x_date)
+        self.pgconn.execute(sql)
+
+        sql = ('''SELECT url,eventname,product FROM event where to_char(to_timestamp(timestamp), 'yyyy-MM-dd')='{0}' 
+        and product is not null and (url, eventname) in (SELECT url,eventname FROM event 
+        where to_char(to_timestamp(timestamp), 'yyyy-MM-dd')='{0}' and eventcategory='categoryShow' and product is null 
+        GROUP BY url,eventname) GROUP BY url,eventname,product''').format(x_date)
+        u_sql = ('''update event set product={2} where product is null and url={0} and eventname={1};''')
+        result = self.pgconn.execute(sql)
+        for val in result.fetchall():
+            e_sql = u_sql.format(val[0], val[1], val[2])
+            self.pgconn.execute(e_sql)
+
+        sql = ('''SELECT split_part(url, '?', 1) as surl,split_part(split_part(url, '?', 2), 'id_sort=', 2) as id_sort,
+        eventaction,eventname,count(1) as num FROM event where to_char(to_timestamp(timestamp), 'yyyy-MM-dd')='{0}' and 
+        eventcategory='categoryShow' and product is null GROUP BY surl,id_sort,eventaction,eventname''').format(x_date)
+        result = self.pgconn.execute(sql)
+        for val in result.fetchall():
+            if val['eventaction'] not in '0123456789':
+                continue
+            try:
+                stp = 1
+                for tp in self.sort_map:
+                    if tp in val['surl']:
+                        stp = self.sort_map.get(tp)
+                    else:
+                        stp = 1
+                response = self.get_product(category_id=int(val['eventaction']), page=1, sort_type=stp)
+                ret = ','.join([x.get('product_id') for x in response])
+                if val[1]:
+                    ret = ret + ','.join(re.findall('\d+', val[1]))
+                self.pgconn.execute(u_sql.format(val[0], val[3], ret))
+            except Exception as e:
+                print('list_click event url error: ', e)
+                continue
 
 
-# if __name__ == '__main__':
-#     mapi = MatomoApi()
+if __name__ == '__main__':
+    mapi = MatomoApi()
+    mapi.product_data('2018-12-15')
 #     mapi.test()
 #     # mapi.n_run(9)
 #     mapi.run((datetime.datetime.today() - datetime.timedelta(days=1)).date())
