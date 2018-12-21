@@ -440,28 +440,27 @@ class MatomoApi(object):
         df.to_sql('product_order', self.pgconn, if_exists='append', index=False)
 
     def product_data(self, x_date):
-        sql = ('''update event set eventname=1 where product is null and 
-        to_char(to_timestamp(timestamp), 'yyyy-MM-dd')='{0}';''').format(x_date)
-        self.pgconn.execute(sql)
-
-        sql = ('''SELECT url,eventname,product FROM event where to_char(to_timestamp(timestamp), 'yyyy-MM-dd')='{0}' 
-        and product is not null and (url, eventname) in (SELECT url,eventname FROM event 
-        where to_char(to_timestamp(timestamp), 'yyyy-MM-dd')='{0}' and eventcategory='categoryShow' and product is null 
-        GROUP BY url,eventname) GROUP BY url,eventname,product''').format(x_date)
+        # sql = ('''update event set eventname=1 where product is null and
+        # to_char(to_timestamp(timestamp), 'yyyy-MM-dd')='{0}';''').format(x_date)
+        # self.pgconn.execute(sql)
+        #
+        # sql = ('''SELECT url,eventname,product FROM event where to_char(to_timestamp(timestamp), 'yyyy-MM-dd')='{0}'
+        # and product is not null and (url, eventname) in (SELECT url,eventname FROM event
+        # where to_char(to_timestamp(timestamp), 'yyyy-MM-dd')='{0}' and eventcategory='categoryShow' and product is null
+        # GROUP BY url,eventname) GROUP BY url,eventname,product''').format(x_date)
         u_sql = ('''update event set product='{2}' where product is null and url='{0}' and eventname={1};''')
-        result = self.pgconn.execute(sql)
-        for val in result.fetchall():
-            e_sql = u_sql.format(val[0], val[1], val[2])
-            self.pgconn.execute(e_sql)
+        # result = self.pgconn.execute(sql)
+        # for val in result.fetchall():
+        #     e_sql = u_sql.format(val[0], val[1], val[2])
+        #     self.pgconn.execute(e_sql)
 
         sql = ('''SELECT split_part(url, '?', 1) as surl,split_part(split_part(url, '?', 2), 'id_sort=', 2) as id_sort,
-        eventaction,eventname,count(1) as num FROM event where to_char(to_timestamp(timestamp), 'yyyy-MM-dd')='{0}' and 
+        eventaction,eventname FROM event where to_char(to_timestamp(timestamp), 'yyyy-MM-dd')='{0}' and 
         eventcategory='categoryShow' and product is null GROUP BY surl,id_sort,eventaction,eventname''').format(x_date)
         result = self.pgconn.execute(sql)
         for val in result.fetchall():
             if val[2][0] not in '0123456789':
                 continue
-            print(val)
             try:
                 stp = 1
                 for tp in self.sort_map:
@@ -473,6 +472,7 @@ class MatomoApi(object):
                 ret = ','.join([x.get('product_id') for x in response])
                 if val[1]:
                     ret = ret + ','.join(re.findall('\d+', val[1]))
+                print(ret)
                 self.pgconn.execute(u_sql.format(val[0], val[3], ret))
             except Exception as e:
                 print('list_click event url error: ', e)
