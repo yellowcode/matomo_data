@@ -248,7 +248,7 @@ class MatomoApi(object):
         :return:
         """
         if isinstance(page, int):
-            product_api = self.site + '/shopping/subcategory_shopping?category_id={0}&page={1}&sort_type={2}&date={3}'.format(
+            product_api = self.site + '/shopping/subcategory_shopping?category_id={0}&page={1}&sort_type={2}'.format(
                 category_id, page, sort_type)
         else:
             product_api = self.site + '/shopping/subcategory_shopping?category_id={0}&sort_type={1}'.format(
@@ -459,8 +459,9 @@ class MatomoApi(object):
         eventcategory='categoryShow' and product is null GROUP BY surl,id_sort,eventaction,eventname''').format(x_date)
         result = self.pgconn.execute(sql)
         for val in result.fetchall():
-            if val[2] not in '0123456789':
+            if val[2][0] not in '0123456789':
                 continue
+            print(val)
             try:
                 stp = 1
                 for tp in self.sort_map:
