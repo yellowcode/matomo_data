@@ -193,10 +193,10 @@ class StatData(object):
         for val in result.fetchall():
             st = [(k, int(val[1])) for k in val[0].split(',')]
             for k, v in st:
-                if k in product_dict:
+                if product_dict.get(k):
                     product_dict[k] = product_dict.get(k) + v
                 else:
-                    product_dict[k].update({k: v})
+                    product_dict.update({k: v})
 
         return [{'product_id': int(k), 'ad_show': v} for k, v in product_dict]
 
@@ -277,10 +277,10 @@ class StatData(object):
         for val in result.fetchall():
             st = [(k, int(val[1])) for k in val[0].split(',')]
             for k, v in st:
-                if k in product_dict:
+                if product_dict.get(k):
                     product_dict[k] = product_dict.get(k) + v
                 else:
-                    product_dict[k].update({k: v})
+                    product_dict.update({k: v})
 
         return [{'product_id': int(k), 'list_show': v} for k, v in product_dict]
 
