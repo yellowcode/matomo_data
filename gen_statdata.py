@@ -184,7 +184,7 @@ class StatData(object):
         :return: [{},{}]
         """
         del_word = 'utm_source=|banner|id_sort|bg=|-c-p-'
-        sql = ('''SELECT array_to_string(array_agg(product),','),count(1) as num FROM 
+        sql = ('''SELECT array_to_string(array_agg(product),',') FROM 
         public."event" ee WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and ee.url ~ '{0}.+?-c-' 
         and split_part(ee.url, 'html?', 2) ~ '{2}' and pid in {3}
         GROUP BY url,eventname,pageidaction;''').format(self.site, x_date, del_word, n_uids)
@@ -196,8 +196,7 @@ class StatData(object):
             product_dict = product_dict + ',' + val[0]
 
         ret = dict(Counter(product_dict.split(',')[1:]))
-
-        return [{'product_id': int(k), 'ad_show': int(v)} for k, v in ret.items()]
+        return [{'product_id': int(k), 'ad_show': int(v)} for k, v in ret.items() if len(k) < 6]
 
     def search_show(self, x_date, n_uids):
         """
@@ -279,7 +278,6 @@ class StatData(object):
             product_dict = product_dict + ',' + val[0]
 
         ret = dict(Counter(product_dict.split(',')[1:]))
-
         return [{'product_id': int(k), 'list_show': int(v)} for k, v in ret.items()]
 
     def list_click(self, x_date, n_uids):
