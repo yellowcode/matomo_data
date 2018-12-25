@@ -189,16 +189,15 @@ class StatData(object):
         and split_part(ee.url, 'html?', 2) ~ '{2}' and pid in {3}
         GROUP BY url,eventname,pageidaction;''').format(self.site, x_date, del_word, n_uids)
         result = self.pgconn.execute(sql)
-        product_dict = {}
+        product_dict = ''
         for val in result.fetchall():
-            st = [(k, int(val[1])) for k in val[0].split(',')]
-            for k, v in st:
-                if product_dict.get(k):
-                    product_dict[k] = product_dict.get(k) + v
-                else:
-                    product_dict.update({k: v})
+            if not val[0]:
+                continue
+            product_dict = product_dict + ',' + val[0]
 
-        return [{'product_id': int(k), 'ad_show': int(v)} for k, v in product_dict.items()]
+        ret = dict(Counter(product_dict.split(','))[1:])
+
+        return [{'product_id': int(k), 'ad_show': int(v)} for k, v in ret.items()]
 
     def search_show(self, x_date, n_uids):
         """
@@ -268,21 +267,20 @@ class StatData(object):
         :return: [{},{}]
         """
         del_word = 'utm_source=|banner|id_sort|bg=|-c-p-'
-        sql = ('''SELECT array_to_string(array_agg(product),','),count(1) as num FROM 
+        sql = ('''SELECT array_to_string(array_agg(product),',') FROM 
         public."event" ee WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and ee.url ~ '{0}.+?-c-' 
         and not split_part(ee.url, 'html?', 2) ~ '{2}' and pid in {3} 
         GROUP BY url,eventname,pageidaction;''').format(self.site, x_date, del_word, n_uids)
         result = self.pgconn.execute(sql)
-        product_dict = {}
+        product_dict = ''
         for val in result.fetchall():
-            st = [(k, int(val[1])) for k in val[0].split(',')]
-            for k, v in st:
-                if product_dict.get(k):
-                    product_dict[k] = product_dict.get(k) + v
-                else:
-                    product_dict.update({k: v})
+            if not val[0]:
+                continue
+            product_dict = product_dict + ',' + val[0]
 
-        return [{'product_id': int(k), 'list_show': int(v)} for k, v in product_dict.items()]
+        ret = dict(Counter(product_dict.split(','))[1:])
+
+        return [{'product_id': int(k), 'list_show': int(v)} for k, v in ret.items()]
 
     def list_click(self, x_date, n_uids):
         """
