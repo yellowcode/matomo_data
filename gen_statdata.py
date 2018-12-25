@@ -198,7 +198,7 @@ class StatData(object):
                 else:
                     product_dict.update({k: v})
 
-        return [{'product_id': int(k), 'ad_show': v} for k, v in product_dict.items()]
+        return [{'product_id': int(k), 'ad_show': int(v)} for k, v in product_dict.items()]
 
     def search_show(self, x_date, n_uids):
         """
@@ -282,7 +282,7 @@ class StatData(object):
                 else:
                     product_dict.update({k: v})
 
-        return [{'product_id': int(k), 'list_show': v} for k, v in product_dict.items()]
+        return [{'product_id': int(k), 'list_show': int(v)} for k, v in product_dict.items()]
 
     def list_click(self, x_date, n_uids):
         """
