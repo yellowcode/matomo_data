@@ -137,7 +137,7 @@ class StatData(object):
         """
         首页曝光
         :param x_date: 日期
-        :param n_uids: 排除uid序列
+        :param n_uids: 指定uid序列
         :return: [{},{}]
         """
         # 乘以？  当日action次数 | 当日访客次数,  当前选择action次数
@@ -160,7 +160,7 @@ class StatData(object):
         """
         活动曝光
         :param x_date: 日期
-        :param n_uids: 排除uid序列
+        :param n_uids: 指定uid序列
         :return: [{},{}]
         """
         promotion_map = copy.deepcopy(self.index_response)
@@ -176,72 +176,31 @@ class StatData(object):
 
         return ret
 
-    def ad_click(self, x_date, n_uids):
-        """
-        获取广告点击量
-        :param x_date: 日期
-        :param n_uids: 排除uid序列
-        :return: [{},{}]
-        """
-        re_word = 'utm_source=|id_sort|bg='
-        sql = '''SELECT pageidaction FROM action WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
-        and url in (SELECT DISTINCT url from (SELECT url,eventaction,eventname,pageidaction FROM public."event" ee 
-        WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and ee.url ~ '{0}.+?-c-') as tb 
-        where split_part(tb.url, 'html?', 2) ~ '{2}' or length(split_part(tb.url, 'html?', 2))>120) 
-        GROUP BY url,pageidaction;'''.format(self.site, x_date, re_word)
-        result = self.pgconn.execute(sql)
-        result = str(tuple([x[0] for x in result.fetchall()]))
-        c_sql = '''SELECT substring(action.url from '-p-(\d+)\.html') as surl, count(1) as num FROM action 
-        WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and url ~ '{0}.+?-p-' and action.pageidrefaction in {2} 
-        and pid in {3} GROUP BY surl;'''.format(self.site, x_date, result, n_uids)
-        result = self.pgconn.execute(c_sql)
-        return [{'product_id': int(x[0]), 'ad_click': x[1]} for x in result.fetchall()]
-
     def ad_show(self, x_date, n_uids):
         """
         广告着陆的首页
         :param x_date: 日期
-        :param n_uids: 排除uid序列
+        :param n_uids: 指定uid序列
         :return: [{},{}]
         """
-        re_word = 'utm_source=|id_sort=|bg='     # url后缀参数代表是广告着陆页的
-        sql = ('''SELECT split_part(tb.url, '?', 1) as surl,split_part(tb.url, '?', 2) as id_sort,tb.eventaction,tb.eventname,count(1) as num from 
-        (SELECT url,eventaction,eventname FROM public."event" ee WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
-        and ee.url ~ '{0}.+?-c-\d+.+?{2}' and pid in {3}) as tb where split_part(tb.url, 'html?', 2) ~ '{2}' 
-        or length(split_part(tb.url, 'html?', 2))>120
-        GROUP BY surl,id_sort,tb.eventaction,tb.eventname;''').format(self.site, x_date, re_word, n_uids)
-        result = pd.read_sql(sql, self.pgconn)
-        pros = [x for x, y in zip(result['id_sort'], result['eventname']) if 'id_sort' in x and y == 1]
-        result.drop('id_sort', axis=1, inplace=True)
-        result = result.groupby(['surl', 'eventaction']).agg({'num': 'sum'}).reset_index()
-        ret = []
-        for index, val in result.iterrows():
-            if val['eventaction'] not in '0123456789':
-                continue
-            try:
-                stp = 1
-                for tp in self.sort_map:
-                    if tp in val['surl']:
-                        stp = self.sort_map.get(tp)
-                    else:
-                        stp = 1
-                response = self.get_product(category_id=int(val['eventaction']), page=1, sort_type=stp)
-                ret = ret + [{'product_id': int(x.get('product_id')), 'ad_show': val['num']} for x in response]
-            except Exception as e:
-                print('list_click event url error: ', e)
-                continue
+        del_word = 'utm_source=|banner|id_sort|bg=|-c-p-'
+        sql = ('''SELECT array_to_string(array_agg(product),','),count(1) as num FROM 
+        public."event" ee WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and ee.url ~ '{0}.+?-c-' 
+        and split_part(ee.url, 'html?', 2) ~ '{2}' and pid in {3}
+        GROUP BY url,eventname,pageidaction;''').format(self.site, x_date, del_word, n_uids)
+        result = self.pgconn.execute(sql)
+        product_string = ''
+        for val in result.fetchall():
+            product_string = product_string + (val[0] + ',')*val[1]
+        ret = Counter(product_string.split(','))
 
-        id_sort = re.findall('\d{4,7}', ''.join(pros))
-        id_sort = dict(Counter(id_sort))
-        ret = ret + [{'product_id': int(k), 'ad_show': v} for k, v in id_sort.items()]
-
-        return ret
+        return [{'product_id': int(k), 'list_show': v} for k, v in ret]
 
     def search_show(self, x_date, n_uids):
         """
         获取搜索页的曝光
         :param x_date: 日期
-        :param n_uids: 排除uid序列
+        :param n_uids: 指定uid序列
         :return: [{},{}]
         """
         sql = ('''SELECT url, count(1) as num FROM action 
@@ -269,45 +228,12 @@ class StatData(object):
 
         return ret
 
-    def list_show(self, x_date, n_uids):
-        """
-        列表曝光
-        :param x_date: 日期
-        :param n_uids: 排除uid序列
-        :return: [{},{}]
-        """
-        d_word = 'utm_source=|banner|id_sort'
-        sql = ('''select split_part(tb.url, '?', 1),tb.eventaction,tb.eventname, count(1) as num from 
-        (SELECT url,eventaction,eventname FROM public."event" ee 
-        WHERE ee.url ~ '{0}.+?-c-' and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and pid in {3}) tb 
-        where not (split_part(tb.url, 'html?', 2) ~ '{2}' and tb.eventname=1) 
-        GROUP BY split_part(tb.url, '?', 1),tb.eventaction,tb.eventname''').format(self.site, x_date, d_word, n_uids)
-        result = self.pgconn.execute(sql)
-        ret = []
-        for val in result.fetchall():
-            if val[1][0] not in '0123456789':
-                continue
-            try:
-                stp = 1
-                for tp in self.sort_map:
-                    if tp in val[0]:
-                        stp = self.sort_map.get(tp)
-                    else:
-                        stp = 1
-                response = self.get_product(category_id=int(val[1]), page=int(val[2]), sort_type=stp)
-                ret = ret + [{'product_id': int(x.get('product_id')), 'list_show': val[-1]} for x in response]
-            except Exception as e:
-                print('list_click event url error: ', e)
-                continue
-
-        return ret
-
     def ocl_click(self, x_date, key, n_uids):
         """
         下单、加购、收藏统计
         :param x_date: 日期
         :param key: 类别
-        :param n_uids: 排除uid序列
+        :param n_uids: 指定uid序列
         :return: [{},{}]
         """
         flags = {'order_click': 'addOrder', 'cart_click': 'addCart', 'like_click': 'collect'}
@@ -321,7 +247,7 @@ class StatData(object):
         """
         详情点击量统计
         :param x_date: 日期
-        :param n_uids: 排除uid序列
+        :param n_uids: 指定uid序列
         :return: [{},{}]
         """
         sql = ('''SELECT substring(aa.url from '-p-(\d+)\.html') as product_idv, count(1) as num FROM action aa 
@@ -330,31 +256,30 @@ class StatData(object):
         result = self.pgconn.execute(sql)
         return [{'product_id': int(x[0]), 'total_detail_click': x[1]} for x in result.fetchall()]
 
+    def list_show(self, x_date, n_uids):
+        """
+        列表曝光
+        :param x_date: 日期
+        :param n_uids: 存在uid序列
+        :return: [{},{}]
+        """
+        del_word = 'utm_source=|banner|id_sort|bg=|-c-p-'
+        sql = ('''SELECT array_to_string(array_agg(product),','),count(1) as num FROM 
+        public."event" ee WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and ee.url ~ '{0}.+?-c-' 
+        and not split_part(ee.url, 'html?', 2) ~ '{2}' and pid in {3}
+        GROUP BY url,eventname,pageidaction;''').format(self.site, x_date, del_word, n_uids)
+        result = self.pgconn.execute(sql)
+        product_string = ''
+        for val in result.fetchall():
+            product_string = product_string + (val[0] + ',')*val[1]
+        ret = Counter(product_string.split(','))
+
+        return [{'product_id': int(k), 'list_show': v} for k, v in ret]
+
     def list_click(self, x_date, n_uids):
         """
         :param x_date: 日期
-        :param n_uids: 排除uid序列
-        :return: [{},{}]
-        """
-        del_word = 'utm_source=|banner|id_sort'
-        sql = '''SELECT pageidaction from action WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
-        and action.url in (select tb.url from (SELECT url,eventname,pageidaction FROM public."event" ee 
-        WHERE ee.url ~ '{0}.+?-c-' and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}') tb 
-        where not (split_part(tb.url, 'html?', 2) ~ '{2}' and tb.eventname=1)) 
-        GROUP BY url,pageidaction;'''.format(self.site, x_date, del_word)
-        result = self.pgconn.execute(sql)
-        result = str(tuple([x[0] for x in result.fetchall()]))
-        c_sql = '''SELECT substring(action.url from '-p-(\d+)\.html'), count(1) as num FROM action 
-        WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
-        and url ~ '{0}.+?-p-' and action.pageidrefaction in {2} and pid in {3} 
-        GROUP BY substring(action.url from '-p-(\d+)\.html')'''.format(self.site, x_date, result, n_uids)
-        result = self.pgconn.execute(c_sql)
-        return [{'product_id': int(x[0]), 'list_click': x[1]} for x in result.fetchall()]
-
-    def test_list_click(self, x_date, n_uids):
-        """
-        :param x_date: 日期
-        :param n_uids: 排除uid序列
+        :param n_uids: 指定uid序列
         :return: [{},{}]
         """
         del_word = 'utm_source=|banner|id_sort|bg=|-c-p-'
@@ -371,10 +296,10 @@ class StatData(object):
         result = self.pgconn.execute(c_sql)
         return [{'product_id': int(x[0]), 'list_click': x[-1]} for x in result.fetchall() if x[0]]
 
-    def test_ad_click(self, x_date, n_uids):
+    def ad_click(self, x_date, n_uids):
         """
         :param x_date: 日期
-        :param n_uids: 排除uid序列
+        :param n_uids: 指定uid序列
         :return: [{},{}]
         """
         del_word = 'utm_source=|id_sort|bg='
@@ -391,115 +316,11 @@ class StatData(object):
         result = self.pgconn.execute(c_sql)
         return [{'product_id': int(x[0]), 'ad_click': x[-1]} for x in result.fetchall()]
 
-    def test_ad_show(self, x_date, n_uids):
-        """
-        广告曝光
-        :param x_date: 日期
-        :param n_uids: 排除国内用户
-        :return: [{},{}]
-        """
-        del_word = 'utm_source=|id_sort|bg='
-        sql = ('''SELECT split_part(url, '?', 1) as surl,split_part(url, '?', 2) as id_sort,eventaction,eventname,
-        count(1) as num FROM public."event" ee WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
-        and ee.url ~ '{0}.+?-c-\d+.+?(?:{2})' and pid in {3} GROUP BY surl,id_sort,eventaction,
-        eventname,pageidaction''').format(self.site, x_date, del_word, n_uids)
-        result = pd.read_sql(sql, self.pgconn)
-        pros = [(x, n) for x, y, n in zip(result['id_sort'], result['eventname'], result['num'])
-                if 'id_sort' in x and y == 1]
-        result.drop('id_sort', axis=1, inplace=True)
-        result = result.groupby(['surl', 'eventaction', 'eventname']).agg({'num': 'sum'}).reset_index()
-        ret = []
-        for index, val in result.iterrows():
-            if val['eventaction'][0] not in '0123456789':
-                continue
-            try:
-                stp = 1
-                for tp in self.sort_map:
-                    if tp in val['surl']:
-                        stp = self.sort_map.get(tp)
-                    else:
-                        stp = 1
-                response = self.get_product(category_id=int(val['eventaction']), page=int(val['eventname']), sort_type=stp)
-                ret = ret + [{'product_id': int(x.get('product_id')), 'ad_show': val['num']} for x in response]
-            except Exception as e:
-                print('list_click event url error: ', e)
-                continue
-
-        pros = [s * n for s, n in pros]
-        id_sort = re.findall('\d{4,7}', ''.join(pros))
-        id_sort = dict(Counter(id_sort))
-        ret = ret + [{'product_id': int(k), 'ad_show': v} for k, v in id_sort.items()]
-
-        return ret
-
-    # def new_ad_show(self, x_date, n_uids):
-    #     """
-    #     广告曝光
-    #     :param x_date: 日期
-    #     :param n_uids: 排除国内用户
-    #     :return: [{},{}]
-    #     """
-    #     del_word = 'utm_source=|id_sort|bg='
-    #     sql = ('''SELECT url,count(1) as num FROM public."event" ee
-    #     WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}'
-    #     and ee.url ~ '{0}.+?-c-\d+.+?(?:{2})' and pid in {3}
-    #     GROUP BY url''').format(self.site, x_date, del_word, n_uids)
-    #     result = pd.read_sql(sql, self.pgconn)
-    #     ret = []
-    #     for k, v in zip(result['url'], result['num']):
-    #         ret = ret + []
-
-    def test_list_show(self, x_date, n_uids):
-        """
-        :param x_date: 日期
-        :param n_uids: 排除uid序列
-        :return: [{},{}]
-        """
-        del_word = 'utm_source=|banner|id_sort|bg=|-c-p-'
-        sql = ('''SELECT pageidaction from action WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
-        and action.url in (select distinct tb.url from (SELECT url,eventname,pageidaction FROM public."event" ee 
-        WHERE ee.url ~ '{0}.+?-c-' and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
-        and not split_part(ee.url, 'html?', 2) ~ '{2}') as tb) 
-        GROUP BY url,pageidaction;''').format(self.site, x_date, del_word)
-        result = self.pgconn.execute(sql)
-        result = str(tuple([x[0] for x in result.fetchall()]))
-        s_sql = ('''SELECT split_part(url, '?', 1) as surl,eventaction,eventname,count(1) as num FROM event 
-        WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and url in (SELECT DISTINCT url FROM action 
-        WHERE to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and pageidaction in (SELECT DISTINCT pageidrefaction 
-        FROM (SELECT substring(action.url from '-p-(\d+)\.html') as prod, pageidrefaction, count(1) as num FROM action 
-        where to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and url ~ '{0}.+?-p-' 
-        GROUP BY prod, pageidrefaction HAVING pageidrefaction in {2}) as tb)) and pid in {3} 
-        GROUP BY surl,eventaction,eventname''').format(self.site, x_date, result, n_uids)
-        c_sql = ('''SELECT split_part(url, '?', 1) as surl,eventaction,eventname,count(1) as num FROM public."event" ee 
-        WHERE ee.url ~ '{0}.+?-c-' and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
-        and not split_part(ee.url, 'html?', 2) ~ '{2}' and pid in {3} 
-        GROUP BY surl,eventaction,eventname''').format(self.site, x_date, del_word, n_uids)
-        sql = '''({0}) union ({1})'''.format(c_sql, s_sql)
-        result = self.pgconn.execute(sql)
-        ret = []
-        for val in result.fetchall():
-            if val[1][0] not in '0123456789':
-                continue
-            try:
-                stp = 1
-                for tp in self.sort_map:
-                    if tp in val[0]:
-                        stp = self.sort_map.get(tp)
-                    else:
-                        stp = 1
-                response = self.get_product(category_id=int(val[1]), page=int(val[2]), sort_type=stp)
-                ret = ret + [{'product_id': int(x.get('product_id')), 'list_show': val[-1]} for x in response]
-            except Exception as e:
-                print('list_click event url error: ', e)
-                continue
-
-        return ret
-
     def search_click(self, x_date, n_uids):
         """
         搜索点击量
         :param x_date: 日期
-        :param n_uids: 排除uid序列
+        :param n_uids: 指定uid序列
         :return: [{},{}]
         """
         sql = '''SELECT substring(action.url from '-p-(\d+)\.html'), count(1) as num FROM action 
@@ -514,7 +335,7 @@ class StatData(object):
         """
         首页点击量
         :param x_date: 日期
-        :param n_uids: 排除uid序列
+        :param n_uids: 指定uid序列
         :return: [{},{}]
         """
         sql = '''SELECT substring(action.url from '-p-(\d+)\.html'), count(1) as num FROM action 
@@ -528,7 +349,7 @@ class StatData(object):
         """
         活动点击量
         :param x_date: 日期
-        :param n_uids: 排除uid序列
+        :param n_uids: 指定uid序列
         :return: [{},{}]
         """
         pm_word = 'banner|/sale'
@@ -547,12 +368,12 @@ class StatData(object):
         :param uids:  访问者uid集合
         :return:
         """
-        left_list_show = pd.DataFrame(self.test_list_show(x_date, uids))
+        left_list_show = pd.DataFrame(self.list_show(x_date, uids))
         print('left_list_show')
-        left_ad_show = pd.DataFrame(self.test_ad_show(x_date, uids))
+        left_ad_show = pd.DataFrame(self.ad_show(x_date, uids))
         print('left_ad_show')
-        left_search_show = pd.DataFrame(self.search_show(x_date, uids))
-        print('left_search_show')
+        # left_search_show = pd.DataFrame(self.search_show(x_date, uids))
+        # print('left_search_show')
         left_index_show = pd.DataFrame(self.index_show(x_date, uids))
         print('left_index_show')
         left_promotion_show = pd.DataFrame(self.promotion_show(x_date, uids))
@@ -560,9 +381,9 @@ class StatData(object):
 
         right_total_detail_click = pd.DataFrame(self.total_detail_click(x_date, uids))
         print('right_total_detail_click')
-        right_list_click = pd.DataFrame(self.test_list_click(x_date, uids))
+        right_list_click = pd.DataFrame(self.list_click(x_date, uids))
         print('right_list_click')
-        right_ad_click = pd.DataFrame(self.test_ad_click(x_date, uids))
+        right_ad_click = pd.DataFrame(self.ad_click(x_date, uids))
         print('right_ad_click')
         right_search_click = pd.DataFrame(self.search_click(x_date, uids))
         print('right_search_click')
@@ -581,7 +402,7 @@ class StatData(object):
         pds = [
             left_list_show,
             left_ad_show,
-            left_search_show,
+            # left_search_show,
             left_index_show,
             left_promotion_show,
             right_total_detail_click,
