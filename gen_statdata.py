@@ -191,7 +191,7 @@ class StatData(object):
         result = self.pgconn.execute(sql)
         product_dict = {}
         for val in result.fetchall():
-            st = [(k, v * int(val[1])) for k, v in Counter(val[0].split(','))]
+            st = [(k, int(val[1])) for k in val[0].split(',')]
             for k, v in st:
                 if k in product_dict:
                     product_dict[k] = product_dict.get(k) + v
@@ -275,7 +275,7 @@ class StatData(object):
         result = self.pgconn.execute(sql)
         product_dict = {}
         for val in result.fetchall():
-            st = [(k, v * int(val[1])) for k, v in Counter(val[0].split(','))]
+            st = [(k, int(val[1])) for k in val[0].split(',')]
             for k, v in st:
                 if k in product_dict:
                     product_dict[k] = product_dict.get(k) + v
@@ -450,3 +450,9 @@ class StatData(object):
         c_uids = self.get_visuid(x_date)
         for c in c_uids:
             self.data_class_stat(x_date, c_uids.get(c))
+
+
+if __name__ == '__main__':
+    import datetime
+    sd = StatData()
+    sd.gen_sql_stat(str((datetime.datetime.today() - datetime.timedelta(days=2)).date()))
