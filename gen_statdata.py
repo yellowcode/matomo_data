@@ -448,7 +448,7 @@ class StatData(object):
             self.data_class_stat(x_date, c_uids.get(c))
 
 
-if __name__ == '__main__':
-    import datetime
-    sd = StatData()
-    sd.gen_sql_stat(str((datetime.datetime.today() - datetime.timedelta(days=2)).date()))
+# if __name__ == '__main__':
+#     import datetime
+#     sd = StatData()
+#     sd.gen_sql_stat(str((datetime.datetime.today() - datetime.timedelta(days=2)).date()))
