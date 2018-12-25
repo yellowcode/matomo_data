@@ -195,7 +195,7 @@ class StatData(object):
                 continue
             product_dict = product_dict + ',' + val[0]
 
-        ret = dict(Counter(product_dict.split(','))[1:])
+        ret = dict(Counter(product_dict.split(',')[1:]))
 
         return [{'product_id': int(k), 'ad_show': int(v)} for k, v in ret.items()]
 
@@ -278,7 +278,7 @@ class StatData(object):
                 continue
             product_dict = product_dict + ',' + val[0]
 
-        ret = dict(Counter(product_dict.split(','))[1:])
+        ret = dict(Counter(product_dict.split(',')[1:]))
 
         return [{'product_id': int(k), 'list_show': int(v)} for k, v in ret.items()]
 
