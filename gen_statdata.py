@@ -239,12 +239,25 @@ class StatData(object):
         :param n_uids: 指定uid序列
         :return: [{},{}]
         """
-        flags = {'order_click': 'addOrder', 'cart_click': 'addCart', 'like_click': 'collect'}
-        sql = ('''SELECT eventname, count(1) as num FROM event 
+        flags = {'cart_click': 'addCart', 'like_click': 'collect'}
+        sql = ('''SELECT substring(url from '-p-(\d+)') as product_id, count(1) as num FROM event 
         WHERE eventaction='{0}' and url ~ '{1}' and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{2}' 
-        and pid in {3} GROUP BY eventname''').format(flags.get(key), self.site, x_date, n_uids)
+        and pid in {3} GROUP BY product_id''').format(flags.get(key), self.site, x_date, n_uids)
         result = self.pgconn.execute(sql)
         return [{'product_id': int(x[0]), key: x[1]} for x in result.fetchall()]
+
+    def order_click(self, x_date, n_uids):
+        """
+        :param x_date: 日期
+        :param n_uids: 指定uid序列
+        :return:
+        """
+        sql = ('''SELECT product_id, count(1) as num FROM product_order where date='{1}' and order_sn in 
+        (SELECT substring(url from 'payment-(\d+)-') as order_sn FROM goal where 
+        to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and pid in {2} 
+        goalname='下订单' and url ~ '{0}') GROUP BY product_id''').format(self.site, x_date, n_uids)
+        result = self.pgconn.execute(sql)
+        return [{'product_id': int(x[0]), 'order_click': x[1]} for x in result.fetchall()]
 
     def total_detail_click(self, x_date, n_uids):
         """
