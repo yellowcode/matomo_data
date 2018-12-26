@@ -93,6 +93,7 @@ class ShoppingSort(object):
 
         ret = dict([(x, ret.get(x)/sum(ret.values())) for x in list(ret.keys())])
 
+        # 事业部给出的待测试权重
         ret = dict(zip(["w_order_click", "w_cart_click", "w_like_click", "w_index_click", "w_promotion_click", "w_ad_click", "w_list_click", "w_search_click"],
                        [0.1157, 0.1517, 0.0557, 0.054, 0.0882, 0.2757, 0.2103, 0.0487]))
 
@@ -133,7 +134,7 @@ class ShoppingSort(object):
         else:
             return [0]*len(pls)
 
-    def cul_run(self, x_date):
+    def cul_run(self, x_date, flag=True):
         re_data = self.calculate_sort(x_date)
         re_w = self.weight_sort(re_data)
         cols = [x for x in list(re_data.columns) if 'w_' in x]
@@ -164,6 +165,9 @@ class ShoppingSort(object):
         for x in sfield:
             mysql_redata[x] = mysql_redata[x].astype(int)
         mysql_redata.to_sql('statday', self.sort_mysql, if_exists='append', index=False, chunksize=100)
+
+        if flag:
+            return
 
         df = re_data[['product_id', 'value', 'sort']]
         d_word = tuple(re_data['product_id'])
@@ -207,30 +211,29 @@ class ShoppingSort(object):
             return 0.00
 
     def save_data(self, x_date):
-        df = self.cul_run(x_date)
-        print(df.head())
-        # sql = '''select product_id from stat_space.sort_result;'''
-        # result = self.pgconn.execute(sql)
-        # product_list = set([int(x[0]) for x in result.fetchall() if x])
-        # df_list = set([int(x) for x in df['product_id'] if x])
-        # new_p = df_list.difference(product_list)
-        # if new_p:
-        #     ndp = pd.DataFrame(data=list(new_p), columns=['product_id'], dtype='int')
-        #     ndp.to_sql('sort_result', self.pgconn, schema='stat_space', if_exists='append', index=False)
-        #
-        # week_map = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-        # # yesterday = datetime.date.today() - datetime.timedelta(days=1)
-        # day = datetime.datetime.strptime(x_date, '%Y-%m-%d').weekday()
-        # field = week_map[day]
-        # df[field] = round(df['value'], 7)
-        # df.fillna(0.00)
-        # sql = '''update stat_space.sort_result set {2}={1} where product_id={0};'''
-        # n = 0
-        # for p, v in zip(df['product_id'], df['value']):
-        #     n = n + 1
-        #     e_sql = sql.format(p, v, field)
-        #     self.pgconn.execute(e_sql)
-        # print('today is ', field)
+        df = self.cul_run(x_date, flag=False)
+        sql = '''select product_id from stat_space.sort_result;'''
+        result = self.pgconn.execute(sql)
+        product_list = set([int(x[0]) for x in result.fetchall() if x])
+        df_list = set([int(x) for x in df['product_id'] if x])
+        new_p = df_list.difference(product_list)
+        if new_p:
+            ndp = pd.DataFrame(data=list(new_p), columns=['product_id'], dtype='int')
+            ndp.to_sql('sort_result', self.pgconn, schema='stat_space', if_exists='append', index=False)
+
+        week_map = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        # yesterday = datetime.date.today() - datetime.timedelta(days=1)
+        day = datetime.datetime.strptime(x_date, '%Y-%m-%d').weekday()
+        field = week_map[day]
+        df[field] = round(df['value'], 7)
+        df.fillna(0.00)
+        sql = '''update stat_space.sort_result set {2}={1} where product_id={0};'''
+        n = 0
+        for p, v in zip(df['product_id'], df['value']):
+            n = n + 1
+            e_sql = sql.format(p, v, field)
+            self.pgconn.execute(e_sql)
+        print('today is ', field)
 
     def sort_run(self, x_date):
         sql = ('''select product_id, monday, tuesday, wednesday, thursday, friday, saturday, sunday 

@@ -23,11 +23,14 @@ if __name__ == '__main__':
 
     # 统计数据
     sd = StatData()
+    # for x in '8765432':
+    #     sd.gen_sql_stat(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
     sd.gen_sql_stat(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
 
     # model计算
     wv = ShoppingSort()
     for x in '7654321':
-        wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
-    wv.sort_run(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
-    wv.write_excel()
+        wv.cul_run(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
+        # wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
+    # wv.sort_run(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
+    # wv.write_excel()
