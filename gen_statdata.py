@@ -423,7 +423,7 @@ class StatData(object):
         right_index_click = pd.DataFrame(self.index_click(x_date, uids))
         print('right_index_click')
 
-        right_order_click = pd.DataFrame(self.ocl_click(x_date, 'order_click', uids))
+        right_order_click = pd.DataFrame(self.order_click(x_date, uids))
         print('right_order_click')
         right_cart_click = pd.DataFrame(self.ocl_click(x_date, 'cart_click', uids))
         print('right_cart_click')
