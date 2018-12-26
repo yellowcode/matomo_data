@@ -80,7 +80,7 @@ class StatData(object):
         :param page: 搜索页当前页数
         :return:
         """
-        search_api = 'http://' + self.site + '/shopping/search?keyword={0}&page={1}'.format(keyword, page)
+        search_api = 'https://' + self.site + '/shopping/search_product?keyword={0}&page={1}'.format(keyword, page)
         response = requests.get(search_api)
         if response.status_code == 200:
             response = response.json()
