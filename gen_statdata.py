@@ -6,6 +6,7 @@
 # 说明     : 生成模型数据
 
 
+import time
 import copy
 import re
 from collections import Counter
@@ -365,6 +366,19 @@ class StatData(object):
         result = self.pgconn.execute(sql)
         return [{'product_id': int(x[0]), 'promotion_click': x[1]} for x in result.fetchall()]
 
+    def clean_date(self, x_date):
+        """
+        清理数据
+        :param x_date: 日期
+        :return:
+        """
+        fields = ['ad', 'list']
+        for v in fields:
+            sql = ('''update stat_space.shopping_params set {1}_show={1}_click*2 + {1}_show 
+            where id in (SELECT id FROM stat_space.shopping_params 
+            where date='{0}' and {1}_click>{1}_show)''').format(x_date, v)
+            self.pgconn.execute(sql)
+
     def data_class_stat(self, x_date, uids):
         """
         分类统计
@@ -437,6 +451,8 @@ class StatData(object):
         result['date'] = str(x_date)
         result.drop_duplicates(keep='first', inplace=True)
         result.to_sql('shopping_params', self.pgconn, schema='stat_space', if_exists='append', index=False)
+        time.sleep(6)
+        self.clean_date(x_date)
 
     def gen_sql_stat(self, x_date):
         """
