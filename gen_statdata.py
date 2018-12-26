@@ -254,7 +254,7 @@ class StatData(object):
         """
         sql = ('''SELECT product_id, count(1) as num FROM product_order where date='{1}' and order_sn in 
         (SELECT substring(url from 'payment-(\d+)-') as order_sn FROM goal where 
-        to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and pid in {2} 
+        to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and pid in {2} and 
         goalname='下订单' and url ~ '{0}') GROUP BY product_id''').format(self.site, x_date, n_uids)
         result = self.pgconn.execute(sql)
         return [{'product_id': int(x[0]), 'order_click': x[1]} for x in result.fetchall()]
