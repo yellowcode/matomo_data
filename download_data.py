@@ -441,7 +441,7 @@ class MatomoApi(object):
 
     def product_data(self, x_date):
         sql = ('''update event set eventname=1 where product is null and 
-        to_char(to_timestamp(timestamp), 'yyyy-MM-dd')='{0}';''').format(x_date)
+        to_char(to_timestamp(timestamp), 'yyyy-MM-dd')='{0}' and eventcategory='categoryShow';''').format(x_date)
         self.pgconn.execute(sql)
 
         sql = ('''SELECT url,eventname,product FROM event where to_char(to_timestamp(timestamp), 'yyyy-MM-dd')='{0}' 
