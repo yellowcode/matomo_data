@@ -30,8 +30,10 @@ if __name__ == '__main__':
 
     # model计算
     wv = ShoppingSort()
-    for x in '7654321':
-        wv.cul_run(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
+    wv.cul_run(str((datetime.datetime.today() - datetime.timedelta(days=int(1))).date()))
+    # for x in '7654321':
+    #     wv.cul_run(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
+    wv.cul_run(str((datetime.datetime.today() - datetime.timedelta(days=int(1))).date()))
         # wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
     # wv.sort_run(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
     # wv.write_excel()

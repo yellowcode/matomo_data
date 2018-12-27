@@ -480,9 +480,9 @@ class MatomoApi(object):
                 continue
 
 
-if __name__ == '__main__':
-    mapi = MatomoApi()
-    mapi.product_data('2018-12-25')
+# if __name__ == '__main__':
+#     mapi = MatomoApi()
+#     mapi.product_data('2018-12-25')
 #     mapi.test()
 #     # mapi.n_run(9)
 #     mapi.run((datetime.datetime.today() - datetime.timedelta(days=1)).date())
