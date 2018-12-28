@@ -311,7 +311,7 @@ class MatomoApi(object):
         FROM product_record where product_id not in (select product_id FROM stat_space.product) 
         GROUP BY product_id,category,subcategory,site,drive_type,instock_time,create_time;'''
         df = pd.read_sql(sql, self.pgconn)
-        df.to_sql('product', self.pgconn, schema='stat_space', if_exists='append', index=False)
+        df.to_sql('product', self.pgconn, schema='stat_space', if_exists='replace', index=False)
 
         # 勾选页中不存在于产品库中的数据
         self.check_spider_product()
