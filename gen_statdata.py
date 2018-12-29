@@ -265,7 +265,7 @@ class StatData(object):
         sql = ('''SELECT to_number(substring(url from '-p-(\d+)'), '999999') as product_id, 
         count(1) as num FROM goal where to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
         and goalname='商品加购' and url ~ '{0}' and to_number(substring(url from '-p-(\d+)'), '999999') not in {2} 
-        and pin in {3} GROUP BY product_id''').format(self.site, x_date, str(tuple([int(x) for x in data.keys()])), n_uids)
+        and pid in {3} GROUP BY product_id''').format(self.site, x_date, str(tuple([int(x) for x in data.keys()])), n_uids)
         result = self.pgconn.execute(sql)
         ret = ret + [{'product_id': int(x[0]), 'cart_click': x[1]} for x in result.fetchall()]
         return ret
