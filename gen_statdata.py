@@ -243,7 +243,7 @@ class StatData(object):
         WHERE eventaction='collect' and url ~ '{0}' and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
         and pid in {2} GROUP BY product_id''').format(self.site, x_date, n_uids)
         result = self.pgconn.execute(sql)
-        return [{'product_id': int(x[0]), 'collect': x[1]} for x in result.fetchall()]
+        return [{'product_id': int(x[0]), 'like_click': x[1]} for x in result.fetchall()]
 
     def cart_click(self, x_date, n_uids):
         """
@@ -252,11 +252,23 @@ class StatData(object):
         :param n_uids: 指定uid序列
         :return:
         """
-        sql = ('''SELECT substring(url from '-p-(\d+)') as product_id, count(1) as num FROM goal 
-        WHERE goalname='商品加购' and url ~ '{0}' and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
-        and pid in {2} GROUP BY product_id''').format(self.site, x_date, n_uids)
+        sql = ('''SELECT cart.product_id, sum(round(cart.revenue/pred.price)) as num FROM 
+        (SELECT to_number(substring(url from '-p-(\d+)'), '999999') as product_id, revenue from goal 
+        where to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and goalname='商品加购' and url ~ '{0}' 
+        and pid in {2}) as cart, (SELECT product_id, price FROM product_record where 
+        to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}') as pred WHERE cart.product_id=pred.product_id 
+        GROUP BY cart.product_id''').format(self.site, x_date, n_uids)
+        ret = []
         result = self.pgconn.execute(sql)
-        return [{'product_id': int(x[0]), 'collect': x[1]} for x in result.fetchall()]
+        data = dict([x for x in result.fetchall()])
+        ret = ret + [{'product_id': int(k), 'cart_click': v} for k, v in data.items()]
+        sql = ('''SELECT to_number(substring(url from '-p-(\d+)'), '999999') as product_id, 
+        count(1) as num FROM goal where to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
+        and goalname='商品加购' and url ~ '{0}' and pid in {2} and product_id not in {3} 
+        GROUP BY product_id''').format(self.site, x_date, n_uids, str(tuple(data.keys())))
+        result = self.pgconn.execute(sql)
+        ret = ret + [{'product_id': int(x[0]), 'cart_click': x[1]} for x in result.fetchall()]
+        return ret
 
     def order_click(self, x_date, n_uids):
         """
