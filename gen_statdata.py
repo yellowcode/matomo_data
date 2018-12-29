@@ -263,8 +263,8 @@ class StatData(object):
         data = dict([x for x in result.fetchall()])
         ret = ret + [{'product_id': int(k), 'cart_click': v} for k, v in data.items()]
         sql = ('''SELECT to_number(substring(url from '-p-(\d+)'), '999999') as product_id, 
-        count(1) as num FROM goal where to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
-        and goalname='商品加购' and url ~ '{0}' and pid in {2} and product_id not in {3} 
+        count(1) as num FROM goal where to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' and goalname='商品加购' 
+        and url ~ '{0}' and pid in {2} and to_number(substring(url from '-p-(\d+)'), '999999') not in {3} 
         GROUP BY product_id''').format(self.site, x_date, n_uids, str(tuple(data.keys())))
         result = self.pgconn.execute(sql)
         ret = ret + [{'product_id': int(x[0]), 'cart_click': x[1]} for x in result.fetchall()]
