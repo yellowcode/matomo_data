@@ -16,24 +16,22 @@ if __name__ == '__main__':
     mapi = MatomoApi()
     # mapi.n_run(9)
     mapi.run((datetime.datetime.today() - datetime.timedelta(days=1)).date())
-    mapi.save_product()  # 获取商城整站product数据
-    mapi.product_data(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
-    # for x in range(1, 8):
-    #     mapi.save_order_product(str((datetime.datetime.today() - datetime.timedelta(days=x)).date()))   # 获取订单数据
+    mapi.save_product()  # 获取商城整站product_id数据
+    mapi.product_data(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))     # event补齐product字段
     mapi.save_order_product(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))   # 获取订单数据
 
     # 统计数据
     sd = StatData()
-    # for x in '8765432':
-    #     sd.gen_sql_stat(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
+    # for x in range(1, 8):
+    #     sd.gen_sql_stat(str((datetime.datetime.today() - datetime.timedelta(days=x)).date()))
     sd.gen_sql_stat(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
 
     # model计算
     wv = ShoppingSort()
     wv.cul_run(str((datetime.datetime.today() - datetime.timedelta(days=int(1))).date()))
+    # wv.cul_run(str((datetime.datetime.today() - datetime.timedelta(days=int(1))).date()))
     # for x in '7654321':
     #     wv.cul_run(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
-    wv.cul_run(str((datetime.datetime.today() - datetime.timedelta(days=int(1))).date()))
-        # wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
+    # wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
     # wv.sort_run(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
     # wv.write_excel()
