@@ -307,11 +307,11 @@ class MatomoApi(object):
             self.pgconn.execute(dsql)
             new_df.to_sql('product', self.pgconn, schema='stat_space', if_exists='append', index=False)
 
-        sql = '''SELECT product_id,category,subcategory,site,'phone' as drive_type,instock_time,create_time 
-        FROM product_record where product_id not in (select product_id FROM stat_space.product) 
-        GROUP BY product_id,category,subcategory,site,drive_type,instock_time,create_time;'''
+        sql = ('''SELECT product_id,max(category) as category,max(subcategory) as subcategory,max(site) as site,
+        'phone' as drive_type,max(instock_time) as instock_time,max(create_time) as create_time FROM product_record 
+        where product_id not in (select product_id FROM stat_space.product) GROUP BY product_id;''')
         df = pd.read_sql(sql, self.pgconn)
-        df.to_sql('product', self.pgconn, schema='stat_space', if_exists='replace', index=False)
+        df.to_sql('product', self.pgconn, schema='stat_space', if_exists='append', index=False)
 
         # 勾选页中不存在于产品库中的数据
         self.check_spider_product()
