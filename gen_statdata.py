@@ -231,20 +231,32 @@ class StatData(object):
 
         return ret
 
-    def ocl_click(self, x_date, key, n_uids):
+    def ocl_click(self, x_date, n_uids):
         """
-        下单、加购、收藏统计
+        收藏统计
         :param x_date: 日期
         :param key: 类别
         :param n_uids: 指定uid序列
         :return: [{},{}]
         """
-        flags = {'cart_click': 'addCart', 'like_click': 'collect'}
         sql = ('''SELECT substring(url from '-p-(\d+)') as product_id, count(1) as num FROM event 
-        WHERE eventaction='{0}' and url ~ '{1}' and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{2}' 
-        and pid in {3} GROUP BY product_id''').format(flags.get(key), self.site, x_date, n_uids)
+        WHERE eventaction='collect' and url ~ '{0}' and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
+        and pid in {2} GROUP BY product_id''').format(self.site, x_date, n_uids)
         result = self.pgconn.execute(sql)
-        return [{'product_id': int(x[0]), key: x[1]} for x in result.fetchall()]
+        return [{'product_id': int(x[0]), 'collect': x[1]} for x in result.fetchall()]
+
+    def cart_click(self, x_date, n_uids):
+        """
+        加购统计
+        :param x_date: 日期
+        :param n_uids: 指定uid序列
+        :return:
+        """
+        sql = ('''SELECT substring(url from '-p-(\d+)') as product_id, count(1) as num FROM goal 
+        WHERE goalname='商品加购' and url ~ '{0}' and to_char(to_timestamp("timestamp"), 'yyyy-MM-dd')='{1}' 
+        and pid in {2} GROUP BY product_id''').format(self.site, x_date, n_uids)
+        result = self.pgconn.execute(sql)
+        return [{'product_id': int(x[0]), 'collect': x[1]} for x in result.fetchall()]
 
     def order_click(self, x_date, n_uids):
         """
@@ -425,9 +437,9 @@ class StatData(object):
 
         right_order_click = pd.DataFrame(self.order_click(x_date, uids))
         print('right_order_click')
-        right_cart_click = pd.DataFrame(self.ocl_click(x_date, 'cart_click', uids))
+        right_cart_click = pd.DataFrame(self.cart_click(x_date, uids))
         print('right_cart_click')
-        right_like_click = pd.DataFrame(self.ocl_click(x_date, 'like_click', uids))
+        right_like_click = pd.DataFrame(self.ocl_click(x_date, uids))
         print('right_like_click')
 
         pds = [
