@@ -150,10 +150,10 @@ class ShoppingSort(object):
         re_data.sort_values(by='value', ascending=False, inplace=True)  # 按一列排序
         re_data['sort'] = [x for x in range(1, len(re_data.index) + 1)]
         # 增加数据生成excel文档
-        re_data['order'] = self.stat_order(str(x_date), list(re_data['product_id']), tp=1)
-        re_data['pay'] = self.stat_order(str(x_date), list(re_data['product_id']), tp=2)
-        re_data.to_excel(self.writer, sheet_name=str(x_date), columns=self.excel_field)
-        self.writer.save()
+        # re_data['order'] = self.stat_order(str(x_date), list(re_data['product_id']), tp=1)
+        # re_data['pay'] = self.stat_order(str(x_date), list(re_data['product_id']), tp=2)
+        # re_data.to_excel(self.writer, sheet_name=str(x_date), columns=self.excel_field)
+        # self.writer.save()
 
         # 转存mysql分析权重
         mysql_redata = re_data.drop('value', axis=1)
