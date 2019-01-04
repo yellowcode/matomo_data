@@ -260,8 +260,8 @@ class AbTest(object):
         dct = dict([(x[0], x[1:]) for x in dct.fetchall()])
         result_normal.update({'date': x_date, 'user_type': tp[0], 'u_num': dct.get(tp[0])[0], 't_num': dct.get(tp[0])[1]})
         result_reboot.update({'date': x_date, 'user_type': tp[1], 'u_num': dct.get(tp[1])[0], 't_num': dct.get(tp[1])[1]})
-        result_normal['user_type'] = '所有产品流量'
-        result_reboot['user_type'] = '60天已加购产品流量'
+        result_normal['user_type'] = '所有产品'
+        result_reboot['user_type'] = '60天已加购产品'
         df = pd.DataFrame([result_normal, result_reboot])
         df.to_sql('shopping_change', self.pgconn, schema='abtest', if_exists='append', index=False)
 
