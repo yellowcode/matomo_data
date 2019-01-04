@@ -264,8 +264,8 @@ class AbTest(object):
         df.to_sql('shopping_change', self.pgconn, schema='abtest', if_exists='append', index=False)
 
 
-if __name__ == '__main__':
-    abtest = AbTest()
-    # abtest.n_run(9)
-    # abtest.run((datetime.datetime.today() - datetime.timedelta(days=1)).date())
-    abtest.shopping_change('2018-12-13')
+# if __name__ == '__main__':
+#     abtest = AbTest()
+#     # abtest.n_run(9)
+#     # abtest.run((datetime.datetime.today() - datetime.timedelta(days=1)).date())
+#     abtest.shopping_change('2019-01-03')

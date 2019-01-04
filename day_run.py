@@ -9,6 +9,7 @@ import datetime
 from download_data import MatomoApi
 from gen_statdata import StatData
 from model import ShoppingSort
+from ab_test import AbTest
 
 
 if __name__ == '__main__':
@@ -35,3 +36,7 @@ if __name__ == '__main__':
     # wv.save_data(str((datetime.datetime.today() - datetime.timedelta(days=int(x))).date()))
     # wv.sort_run(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
     # wv.write_excel()
+
+    # a/b测试统计代码
+    abtest = AbTest()
+    abtest.shopping_change(str((datetime.datetime.today() - datetime.timedelta(days=1)).date()))
