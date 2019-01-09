@@ -13,10 +13,7 @@ from sqlalchemy.orm import sessionmaker
 class PgsqlConn(object):
 
     def __init__(self):
-        self.__engine_space = create_engine('postgresql://shengyt:syt2018@47.90.97.255:54320/matomo')
-        # self.__engine_space = create_engine('postgresql://shengyt:syt2018@localhost:54320/matomo')
-        self.__mysql_space = create_engine('mysql+pymysql://root:fGrIyMAiPS9wPcE8HnW8@localhost:3306/dwstyle')
-        self.__mysql_sort = create_engine('mysql+pymysql://guest:YibdC12dSUKCz7Yh@154.48.235.112:3306/sort')
+        pass
 
     def pgsql_conn(self):
         """
